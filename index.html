@@ -259,8 +259,8 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     const INITIAL_COURTS = [
       { id: 'c1', name: 'Quadra 01 - Sintética Premium', type: 'Sintética', icon: '⚽', pricePerHour: 150, status: 'Disponível' },
       { id: 'c2', name: 'Quadra 02 - Sintética Gold', type: 'Sintética', icon: '⚽', pricePerHour: 150, status: 'Disponível' },
-      { id: 'c3', name: 'Arena 01 - Praia & Futevôlei', type: 'Areia', icon: '🏖️', pricePerHour: 120, status: 'Disponível' },
-      { id: 'c4', name: 'Arena 02 - Beach Tennis', type: 'Areia', icon: '🏖️', pricePerHour: 120, status: 'Disponível' },
+      { id: 'c3', name: 'Quadra 03 - Areia & Futevôlei', type: 'Areia', icon: '🏖️', pricePerHour: 120, status: 'Disponível' },
+      { id: 'c4', name: 'Quadra 04 - Beach Tennis', type: 'Areia', icon: '🏖️', pricePerHour: 120, status: 'Disponível' },
       { id: 'c5', name: 'Quadra 03 - Saibro Tênis', type: 'Rápida/Tênis', icon: '🎾', pricePerHour: 180, status: 'Disponível' }
     ];
 
@@ -296,12 +296,21 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     };
 
     const TODAY_STR = getTodayStr();
-    const INITIAL_BOOKINGS = [
-      { id: 'b1', courtId: 'c1', date: TODAY_STR, timeSlot: '19:00', clientName: 'Galo Doido FC', phone: '(31) 99999-0001', paymentStatus: 'Pago', price: 150 },
-      { id: 'b2', courtId: 'c2', date: TODAY_STR, timeSlot: '20:00', clientName: 'Gestão Bar & Quadra FC Pelada', phone: '(31) 98888-0002', paymentStatus: 'Pago', price: 150 },
-      { id: 'b3', courtId: 'c3', date: TODAY_STR, timeSlot: '18:00', clientName: 'Dupla Beach Volley', phone: '(31) 96666-0004', paymentStatus: 'Pendente', price: 120 },
-      { id: 'b4', courtId: 'c1', date: TODAY_STR, timeSlot: '21:00', clientName: 'Amigos do Churrasco', phone: '(31) 97777-0003', paymentStatus: 'Pendente', price: 150 }
-    ];
+    const getMonthStartStr = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      return `${year}-${month}-01`;
+    };
+    const getMonthEndStr = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const lastDay = new Date(year, month, 0).getDate();
+      return `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    };
+
+    const INITIAL_BOOKINGS = [];
 
     const INITIAL_PRODUCTS = [
       { id: 'p1', name: 'Cerveja Heineken Long Neck 330ml', category: 'Bebidas', price: 12.00, stock: 85, minStock: 20, icon: '🍺' },
@@ -312,15 +321,9 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       { id: 'p6', name: 'Red Bull Energy Drink 250ml', category: 'Bebidas', price: 15.00, stock: 60, minStock: 15, icon: '🐂' }
     ];
 
-    const INITIAL_COMANDAS = [
-      { id: 'cmd1', name: 'Mesa 01 - Pelada das 19h', items: [{ id: 'p1', name: 'Cerveja Heineken Long Neck 330ml', price: 12, qty: 6 }, { id: 'p4', name: 'Porção de Batata Frita c/ Queijo', price: 35, qty: 1 }], total: 107.00, status: 'Aberta' },
-      { id: 'cmd2', name: 'Mesa 04 - Beach Tennis', items: [{ id: 'p3', name: 'Gatorade 500ml', price: 9.50, qty: 2 }], total: 19.00, status: 'Aberta' }
-    ];
+    const INITIAL_COMANDAS = [];
 
-    const INITIAL_WAITLIST = [
-      { id: 'w1', clientName: 'Time dos Amigos FC', phone: '(31) 98877-6655', courtType: 'Sintética', timeSlot: '20:00', date: TODAY_STR },
-      { id: 'w2', clientName: 'Furia Futevôlei', phone: '(31) 97766-5544', courtType: 'Areia', timeSlot: '19:00', date: TODAY_STR }
-    ];
+    const INITIAL_WAITLIST = [];
 
     function App() {
       const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -398,7 +401,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [toastMessage, setToastMessage] = useState(null);
       const [selectedDate, setSelectedDate] = useState(TODAY_STR);
 
-      const [loginEmail, setLoginEmail] = useState('admin@arenatoulon.com.br');
+      const [loginEmail, setLoginEmail] = useState('admin@gestaobar.com');
       const [loginPassword, setLoginPassword] = useState('nexa@admin2026');
       const [loginError, setLoginError] = useState('');
 
@@ -407,36 +410,26 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [products, setProducts] = useState(INITIAL_PRODUCTS);
       const [tablesList, setTablesList] = useState(INITIAL_TABLES);
       const [comandas, setComandas] = useState(INITIAL_COMANDAS);
-      const [salesHistory, setSalesHistory] = useState([
-        { id: 's1', date: '2026-08-05', type: 'Bar', description: 'Mesa 02 - Skol & Porção', itemsCount: 4, total: 85.00, paymentMethod: 'PIX' },
-        { id: 's2', date: '2026-08-08', type: 'Bar', description: 'Mesa 05 - Heineken x8', itemsCount: 8, total: 96.00, paymentMethod: 'Cartão' },
-        { id: 's3', date: TODAY_STR, type: 'Bar', description: 'Mesa 01 - Pelada das 19h', itemsCount: 7, total: 107.00, paymentMethod: 'PIX' },
-      ]);
+      const [salesHistory, setSalesHistory] = useState([]);
       const [waitlist, setWaitlist] = useState(INITIAL_WAITLIST);
 
       /* Cash Register & Shift State */
       const [cashShift, setCashShift] = useState({
-        isOpen: true,
-        openedAt: '2026-08-13 08:00',
-        openedBy: 'Marcos Caixa',
-        initialBalance: 200.00
+        isOpen: false,
+        openedAt: null,
+        openedBy: null,
+        initialBalance: 0
       });
 
-      const [cashMovements, setCashMovements] = useState([
-        { id: 'm1', time: '08:00', type: 'Abertura', description: 'Fundo de Caixa Inicial (Troco)', amount: 200.00, method: 'Dinheiro', operator: 'Marcos Caixa' },
-        { id: 'm2', time: '09:15', type: 'Venda Bar', description: 'Mesa 02 - Bebidas e Aperitivos', amount: 85.00, method: 'PIX', operator: 'Marcos Caixa' },
-        { id: 'm3', time: '11:30', type: 'Reserva', description: 'Galo Doido FC - Sintética 01', amount: 150.00, method: 'Dinheiro', operator: 'Ana Recepção' },
-        { id: 'm4', time: '14:20', type: 'Sangria', description: 'Pagamento Fornecedor Distribuidora', amount: -100.00, method: 'Dinheiro', operator: 'Carlos Gerente' },
-        { id: 'm5', time: '15:45', type: 'Suprimento', description: 'Aporte de Troco em Dinheiro', amount: 50.00, method: 'Dinheiro', operator: 'Marcos Caixa' }
-      ]);
+      const [cashMovements, setCashMovements] = useState([]);
 
       const [activeComandaId, setActiveComandaId] = useState(INITIAL_COMANDAS[0]?.id || null);
       const [closingPaymentMethod, setClosingPaymentMethod] = useState('PIX');
       const [cashReceived, setCashReceived] = useState('');
 
       const [reportType, setReportType] = useState('geral');
-      const [reportStartDate, setReportStartDate] = useState('2026-08-01');
-      const [reportEndDate, setReportEndDate] = useState('2026-08-31');
+      const [reportStartDate, setReportStartDate] = useState(getMonthStartStr());
+      const [reportEndDate, setReportEndDate] = useState(getMonthEndStr());
 
       /* Modals State */
       const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
@@ -1763,12 +1756,22 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
             <div id="printable-report" className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-slate-800">
               <div className="flex justify-between items-start border-b-2 border-emerald-900 pb-5 mb-6">
                 <div className="flex items-center space-x-4">
-                  <ArenaLogo className="w-16 h-16 shrink-0" />
+                  {branding.logoUrl ? (
+                    <img src={branding.logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-xl" />
+                  ) : branding.emoji ? (
+                    <span className="text-4xl shrink-0">{branding.emoji}</span>
+                  ) : (
+                    <ArenaLogo className="w-16 h-16 shrink-0" />
+                  )}
                   <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">ARENA TOULON</h1>
-                    <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Complexo Esportivo & Bar</p>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
+                      {branding.title || "GESTÃO DE BAR E QUADRA"}
+                    </h1>
+                    <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest">
+                      {branding.title && branding.title !== "Gestão de Bar e Quadra" ? "Complexo Esportivo & Bar" : "Sistema de Gestão Integrada & Bar"}
+                    </p>
                     <p className="text-[11px] font-semibold text-slate-500 mt-1">
-                      Período: {reportStartDate.split('-').reverse().join('/')} até {reportEndDate.split('-').reverse().join('/')}
+                      Período: {reportStartDate ? reportStartDate.split("-").reverse().join("/") : ""} até {reportEndDate ? reportEndDate.split("-").reverse().join("/") : ""}
                     </p>
                   </div>
                 </div>
