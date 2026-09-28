@@ -1002,17 +1002,17 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
 
         return (
           <div className="space-y-8 animate-in fade-in duration-500 relative z-10">
-            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white rounded-3xl p-8 shadow-2xl border border-emerald-900/30 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl border border-emerald-900/30 relative overflow-hidden">
               <div className="absolute right-[-40px] top-[-40px] opacity-10 pointer-events-none">
                 <ArenaLogo className="w-96 h-96" />
               </div>
 
-              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center space-x-6">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 text-center md:text-left">
+                <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-6 w-full md:w-auto">
                   <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-blue-600 rounded-full blur-md opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative bg-slate-950 rounded-full p-2 border border-emerald-700 logo-pulse">
-                      <ArenaLogo className="w-20 h-20 md:w-24 md:h-24" />
+                      <ArenaLogo className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24" />
                     </div>
                   </div>
 
@@ -1034,7 +1034,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   </div>
                 </div>
 
-                <div className="shrink-0 text-right bg-slate-900/80 p-4 rounded-2xl border border-slate-800 backdrop-blur-xs min-w-[200px]">
+                <div className="w-full md:w-auto shrink-0 text-center md:text-right bg-slate-900/80 p-3 sm:p-4 rounded-2xl border border-slate-800 backdrop-blur-xs">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data de Hoje</p>
                   <p className="text-base font-black text-white font-mono mt-0.5">{(selectedDate || '').split('-').reverse().join('/')}</p>
                   <p className="text-[10px] font-bold text-emerald-400 mt-1 flex items-center justify-end">
@@ -1984,7 +1984,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       ];
 
       return (
-        <div className="min-h-screen bg-slate-100 font-sans flex text-slate-800 antialiased relative overflow-hidden">
+        <div className="min-h-screen max-w-full bg-slate-100 font-sans flex text-slate-800 antialiased relative overflow-x-hidden">
           <WatermarkBackground />
 
           {toastMessage && (
@@ -2073,22 +2073,22 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
             </div>
           </aside>
 
-          <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
+          <main className="flex-1 flex flex-col min-w-0 max-w-full overflow-y-auto overflow-x-hidden relative z-10">
             {/* Top Degustação / Pro Announcement Banner */}
-            <div className={`px-6 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold no-print transition-all ${
+            <div className={`px-3 sm:px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold no-print transition-all w-full overflow-hidden ${
               isProPlan 
                 ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-emerald-100 border-b border-emerald-700' 
                 : 'bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-700 text-white shadow-md'
             }`}>
-              <div className="flex items-center space-x-2">
-                <span className="text-base">{isProPlan ? '👑' : '⭐'}</span>
-                <span>
+              <div className="flex items-center space-x-1.5 text-center sm:text-left justify-center sm:justify-start w-full sm:w-auto">
+                <span className="text-sm sm:text-base">{isProPlan ? '👑' : '⭐'}</span>
+                <span className="text-[11px] sm:text-xs leading-tight">
                   {isProPlan 
-                    ? 'Conta PRO Vitalícia Ativa — Todos os recursos, comandas, quadras e produtos 100% liberados!' 
-                    : 'Modo Degustação Grátis (Limites Ativos: máx. 2 itens por função) — Desbloqueie o sistema completo!'}
+                    ? 'Conta PRO Vitalícia Ativa — Tudo 100% liberado!' 
+                    : 'Modo Degustação Grátis (Máx. 2 itens por função)'}
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 justify-center sm:justify-end w-full sm:w-auto">
                 <button
                   onClick={() => {
                     if (!isProPlan) {
@@ -2099,10 +2099,10 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                       setIsBrandingModalOpen(true);
                     }
                   }}
-                  className="px-3 py-1.5 bg-black/20 hover:bg-black/30 rounded-lg text-[11px] font-black uppercase tracking-wider text-white border border-white/30 cursor-pointer flex items-center space-x-1"
+                  className="hidden sm:flex px-3 py-1.5 bg-black/20 hover:bg-black/30 rounded-lg text-[11px] font-black uppercase tracking-wider text-white border border-white/30 cursor-pointer items-center space-x-1"
                 >
                   <span>🎨</span>
-                  <span>Personalizar Marca / Logo</span>
+                  <span>Marca / Logo</span>
                   {!isProPlan && <span className="bg-amber-300 text-slate-950 text-[9px] px-1 rounded-sm ml-1">PRO</span>}
                 </button>
 
@@ -2112,9 +2112,9 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                       setProModalReason('Adquira a Conta PRO Vitalícia para ter acesso ilimitado a todas as ferramentas!');
                       setIsProModalOpen(true);
                     }}
-                    className="px-4 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm cursor-pointer animate-pulse"
+                    className="w-full sm:w-auto px-3.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm cursor-pointer animate-pulse text-center"
                   >
-                    🔓 Desbloquear PRO (R$ 368,00 ou 12x)
+                    🔓 Desbloquear PRO (R$ 368 ou 12x)
                   </button>
                 ) : (
                   <span className="bg-emerald-600/80 text-white text-[10px] px-2.5 py-1 rounded-full border border-emerald-400/50">
@@ -2124,50 +2124,49 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               </div>
             </div>
 
-            <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-20 no-print">
-              <div className="flex items-center space-x-3">
-
+            <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 sm:py-4 flex justify-between items-center sticky top-0 z-20 no-print max-w-full overflow-hidden">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer"
+                  className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer shrink-0"
                   title="Abrir Menu"
                 >
                   <MenuIcon size={20} />
                 </button>
 
-                <h2 className="text-base font-black text-slate-800 capitalize">
-                  {activeTab === 'welcome' ? 'Início / Hub Operacional' : activeTab}
+                <h2 className="text-sm sm:text-base font-black text-slate-800 capitalize truncate max-w-[130px] sm:max-w-none">
+                  {activeTab === 'welcome' ? 'Início / Hub' : activeTab}
                 </h2>
-                <span className="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full">
+                <span className="text-[11px] bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded-full hidden md:inline">
                   Data: {(selectedDate || '').split('-').reverse().join('/')}
                 </span>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
                 {!isProPlan && (
                   <button
                     onClick={() => setIsProModalOpen(true)}
-                    className="flex items-center space-x-1.5 px-4 py-2 bg-white border border-slate-200 hover:border-amber-300 rounded-full text-xs font-bold text-slate-700 shadow-sm transition-all cursor-pointer"
+                    className="flex items-center space-x-1 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-amber-50 sm:bg-white border border-amber-200 sm:border-slate-200 hover:border-amber-300 rounded-full text-[11px] sm:text-xs font-bold text-amber-900 sm:text-slate-700 shadow-xs transition-all cursor-pointer"
                   >
-                    <SparklesIcon size={15} className="text-amber-500" />
-                    <span>Conhecer Pro &rarr;</span>
+                    <SparklesIcon size={14} className="text-amber-500" />
+                    <span>Conhecer Pro</span>
                   </button>
                 )}
                 <button
                   onClick={() => showToast('Nenhuma notificação nova por enquanto.')}
-                  className="p-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-500 hover:text-slate-700 shadow-sm transition-all cursor-pointer relative"
+                  className="p-1.5 sm:p-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-500 hover:text-slate-700 shadow-xs transition-all cursor-pointer relative hidden sm:block"
                   title="Notificações"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                 </button>
                 {isProPlan ? (
                   <React.Fragment>
-                    <span className="text-xs font-black text-slate-700 bg-slate-100 px-3 py-2 rounded-full border border-slate-200 hidden sm:inline">
+                    <span className="text-xs font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hidden sm:inline">
                       {ROLES.find(r => r.id === loggedUser?.role)?.icon} {loggedUser?.name}
                     </span>
                     <button
                       onClick={handleLogout}
-                      className="px-4 py-2 text-slate-600 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-slate-600 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
                     >
                       Sair
                     </button>
@@ -2176,13 +2175,13 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   <React.Fragment>
                     <button
                       onClick={() => setShowAuthScreen('login')}
-                      className="px-4 py-2 text-slate-700 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-slate-700 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
                     >
                       Entrar
                     </button>
                     <button
                       onClick={() => setShowAuthScreen('register')}
-                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
                     >
                       Criar conta
                     </button>
@@ -2191,7 +2190,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               </div>
             </header>
 
-            <div className="p-6 max-w-7xl w-full mx-auto">
+            <div className="p-3 sm:p-6 max-w-7xl w-full mx-auto overflow-x-hidden">
               {activeTab === 'welcome' && renderWelcomeHub()}
               {activeTab === 'bookings' && renderBookings()}
               {activeTab === 'waitlist' && renderWaitlist()}
