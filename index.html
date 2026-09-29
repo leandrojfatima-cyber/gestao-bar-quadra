@@ -79,6 +79,12 @@
       </svg>
     );
 
+    const BellIcon = ({ size = 20, className = "" }) => (
+      <SvgIcon size={size} className={className}>
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+      </SvgIcon>
+    );
     const MenuIcon = ({ size = 18, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <line x1="4" y1="12" x2="20" y2="12"/>
@@ -184,7 +190,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     const SUBSCRIPTION_PLANS = [
       {
         id: 'vitalicio',
-        name: '👑 Mestre / Administrador Vitalício',
+        name: '👑 Mestre / Administrador PRO',
         price: 'R$ 2.500,00',
         numericPrice: 2500.00,
         period: 'Pagamento Único • Sem Vencimento',
@@ -271,7 +277,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     ];
 
     const ROLES = [
-      { id: 'admin', name: 'Administrador Vitalício 👑', icon: '👑', color: 'bg-emerald-700 text-white font-black border border-emerald-600' },
+      { id: 'admin', name: 'Administrador PRO 👑', icon: '👑', color: 'bg-emerald-700 text-white font-black border border-emerald-600' },
       { id: 'gerente', name: 'Gerente Operacional', icon: '💼', color: 'bg-blue-900 text-white font-bold' },
       { id: 'recepcao', name: 'Recepcionista', icon: '💁', color: 'bg-slate-800 text-white font-bold' },
       { id: 'caixa', name: 'Operador de Caixa', icon: '💰', color: 'bg-amber-600 text-white font-black' },
@@ -280,9 +286,9 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
 
     const INITIAL_USERS = [
-      { id: 'v1', name: 'Manutenção 1 (Vitalícia)', email: 'vitalicia1@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Manutenção Vitalícia 1', validUntil: null, status: 'Ativo' },
-      { id: 'v2', name: 'Manutenção 2 (Vitalícia)', email: 'vitalicia2@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Manutenção Vitalícia 2', validUntil: null, status: 'Ativo' },
-      { id: 'u1', name: 'Administrador (Gestão Bar & Quadra)', email: 'admin@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Acesso Vitalício', validUntil: null, status: 'Ativo' },
+      { id: 'v1', name: 'Modo Master', email: 'vitalicia1@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Modo Master', validUntil: null, status: 'Ativo' },
+      { id: 'v2', name: 'Modo Master', email: 'vitalicia2@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Modo Master', validUntil: null, status: 'Ativo' },
+      { id: 'u1', name: 'Administrador (Gestão Bar & Quadra)', email: 'admin@gestaobar.com', password: '123', role: 'admin', approvalStatus: 'Aprovado', planId: 'vitalicio', planName: '👑 Acesso PRO', validUntil: null, status: 'Ativo' },
       { id: 'u2', name: 'Carlos Gerente', email: 'gerente@gestaobar.com', password: '123', role: 'gerente', approvalStatus: 'Aprovado', planId: 'anual', planName: '⭐ Plano Anual', validUntil: '2028-12-31', status: 'Ativo' },
       { id: 'u3', name: 'Ana Recepção', email: 'recepcao@gestaobar.com', password: '123', role: 'recepcao', approvalStatus: 'Aprovado', planId: 'mensal', planName: '📅 Plano Mensal', validUntil: '2028-12-31', status: 'Ativo' },
     ];
@@ -296,6 +302,16 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     };
 
     const TODAY_STR = getTodayStr();
+    const getTomorrowStr = () => {
+      const now = new Date();
+      now.setDate(now.getDate() + 1);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const TOMORROW_STR = getTomorrowStr();
+
     const getMonthStartStr = () => {
       const now = new Date();
       const year = now.getFullYear();
@@ -326,6 +342,112 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
     const INITIAL_WAITLIST = [];
 
     function App() {
+      // Sistema de Notificações Sonoras (Web Audio API nativa sem dependência de internet ou arquivos externos)
+      
+      const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+      const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
+        try {
+          return localStorage.getItem('gestao_bar_sound_enabled') !== 'false';
+        } catch(e) { return true; }
+      });
+
+      const playSystemSound = (type = 'notify', force = false) => {
+        if (!isSoundEnabled && !force) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctx = new AudioCtx();
+          if (ctx.state === 'suspended') ctx.resume();
+          const now = ctx.currentTime;
+
+          if (type === 'cash') {
+            // Som característico de venda finalizada / caixa registradora (duplo ding metálico)
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc1.type = 'sine';
+            osc2.type = 'triangle';
+            osc1.frequency.setValueAtTime(987.77, now);
+            osc1.frequency.setValueAtTime(1318.51, now + 0.08);
+            osc2.frequency.setValueAtTime(1318.51, now + 0.08);
+            osc2.frequency.setValueAtTime(1975.53, now + 0.16);
+            gain.gain.setValueAtTime(0.28, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+            osc1.start(now);
+            osc2.start(now + 0.08);
+            osc1.stop(now + 0.65);
+            osc2.stop(now + 0.65);
+          } else if (type === 'box_open') {
+            // Abertura de gaveta / turno de caixa (tom ascendente)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+          } else if (type === 'box_close') {
+            // Fechamento de caixa (acorde harmonioso de encerramento)
+            [523.25, 659.25, 783.99].forEach((freq, idx) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+              gain.gain.setValueAtTime(0.16, now + idx * 0.05);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.45);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + idx * 0.05);
+              osc.stop(now + idx * 0.05 + 0.45);
+            });
+          } else if (type === 'agenda') {
+            // Agendamento de quadra / horário marcado (ding melódico claro)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(659.25, now);
+            osc.frequency.setValueAtTime(1046.50, now + 0.09);
+            gain.gain.setValueAtTime(0.24, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+          } else {
+            // Notificação do sistema / toast geral (pop suave)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(784, now);
+            osc.frequency.exponentialRampToValueAtTime(523, now + 0.12);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.22);
+          }
+        } catch (e) {
+          console.warn('AudioContext error:', e);
+        }
+      };
+
+      const toggleSound = () => {
+        setIsSoundEnabled(prev => {
+          const next = !prev;
+          try { localStorage.setItem('gestao_bar_sound_enabled', next ? 'true' : 'false'); } catch(e) {}
+          if (next) setTimeout(() => playSystemSound('notify', true), 60);
+          return next;
+        });
+      };
+
       const [isAuthenticated, setIsAuthenticated] = useState(true);
     const [isTechLoginModalOpen, setIsTechLoginModalOpen] = useState(false);
     const [techEmail, setTechEmail] = useState('');
@@ -348,18 +470,21 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       setIsBrandingModalOpen(false);
       showToast('Identidade visual atualizada com sucesso!');
     };
-    // Plano Degustação (Grátis) vs Pro
-    const [isProPlan, setIsProPlan] = useState(() => {
-      return localStorage.getItem('gestao_bar_quadra_pro') === 'true';
-    });
+    // Plano Teste (Grátis) vs Pro - Garante que Visitante (Teste) NUNCA seja Pro
+    const [isProPlan, setIsProPlan] = useState(false);
     const [isProModalOpen, setIsProModalOpen] = useState(false);
     const [proModalReason, setProModalReason] = useState('');
     const [proPaymentTab, setProPaymentTab] = useState('pix');
     const [copiedPix, setCopiedPix] = useState(false);
 
+    const triggerProModal = (reason) => {
+      setProModalReason(reason);
+      setIsProModalOpen(true);
+    };
+
     const checkLimitOrOpenPro = (currentCount, limit, resourceName) => {
       if (!isProPlan && currentCount >= limit) {
-        setProModalReason(`Você atingiu o limite de ${limit} ${resourceName} no Plano Degustação.`);
+        setProModalReason(`Você atingiu o limite de ${limit} ${resourceName} no Plano Teste.`);
         setIsProModalOpen(true);
         return false;
       }
@@ -374,23 +499,51 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         setIsProModalOpen(false);
         setToastMessage("Parabéns! Sua conta PRO foi ativada com sucesso! Todos os limites foram liberados.");
       } else {
-        setToastMessage("Modo Degustação (Grátis) ativado.");
+        setToastMessage("Modo Teste (Grátis) ativado.");
       }
     };
 
       const [systemUsers, setSystemUsers] = useState(INITIAL_USERS);
       const [loggedUser, setLoggedUser] = useState({
         id: 'guest',
-        name: 'Visitante (Degustação)',
+        name: 'Visitante (Teste)',
         role: 'admin',
         email: 'degustacao@gestaobar.com',
         status: 'Ativo',
         approvalStatus: 'Aprovado',
-        planName: 'Degustação Grátis (Limites Ativos)',
+        planName: 'Teste Grátis (Limites Ativos)',
         validUntil: null
       });
       
       const [activeTab, setActiveTab] = useState('welcome');
+      const [isPostPaymentModalOpen, setIsPostPaymentModalOpen] = useState(false);
+      const [postPaymentData, setPostPaymentData] = useState({ name: '', email: '', password: '' });
+
+      // Verificação automática de retorno do Mercado Pago na URL (Opção 1)
+            useEffect(() => {
+        // Visitante/Teste sempre inicia com travas e selos PRO ativos
+        const storedPro = localStorage.getItem('gestao_bar_quadra_pro');
+        const storedUser = localStorage.getItem('gestao_bar_quadra_user');
+        if (storedUser && storedUser !== 'guest' && storedPro === 'true') {
+          setIsProPlan(true);
+        } else {
+          setIsProPlan(false);
+          localStorage.setItem('gestao_bar_quadra_pro', 'false');
+        }
+      }, []);
+
+      useEffect(() => {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const status = urlParams.get('status') || urlParams.get('collection_status') || urlParams.get('payment_status');
+          if (status === 'approved' || status === 'aprovado' || urlParams.get('transacao') === 'pago') {
+            setIsPostPaymentModalOpen(true);
+            showToast('Pagamento confirmado pelo Mercado Pago! Complete seu cadastro para liberar a Conta PRO.');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }, []);
     const [showAuthScreen, setShowAuthScreen] = useState(null);
     const [authEmail, setAuthEmail] = useState('');
     const [authPassword, setAuthPassword] = useState('');
@@ -399,6 +552,15 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [toastMessage, setToastMessage] = useState(null);
+
+      // Auto-remover notificação após 4 segundos
+      useEffect(() => {
+        if (!toastMessage) return;
+        const timer = setTimeout(() => {
+          setToastMessage(null);
+        }, 4000);
+        return () => clearTimeout(timer);
+      }, [toastMessage]);
       const [selectedDate, setSelectedDate] = useState(TODAY_STR);
 
       const [loginEmail, setLoginEmail] = useState('admin@gestaobar.com');
@@ -448,7 +610,41 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [requestUserForm, setRequestUserForm] = useState({ name: '', email: '', password: '', selectedPlanId: 'mensal', role: 'recepcao' });
 
       const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
-      const [waitlistForm, setWaitlistForm] = useState({ clientName: '', phone: '', courtType: 'Sintética', timeSlot: '19:00', date: TODAY_STR });
+      const [waitlistForm, setWaitlistForm] = useState({ clientName: '', phone: '', courtType: 'Sintética', timeSlot: '19:00', date: TODAY_STR, notes: '' });
+
+      const handleSaveWaitlist = (e) => {
+        e.preventDefault();
+        if (!isProPlan && waitlist.length >= 2) {
+          triggerProModal('O limite do Modo Teste é de até 2 clientes na lista de espera simultaneamente.');
+          return;
+        }
+
+        if (!waitlistForm.clientName || !waitlistForm.phone) {
+          showToast('Preencha o nome e o telefone do cliente.');
+          return;
+        }
+
+        const newEntry = {
+          id: 'wl_' + Date.now(),
+          clientName: waitlistForm.clientName,
+          phone: waitlistForm.phone,
+          courtType: waitlistForm.courtType,
+          timeSlot: waitlistForm.timeSlot,
+          date: waitlistForm.date || TODAY_STR,
+          notes: waitlistForm.notes || 'Preferência no horário',
+          createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        setWaitlist([newEntry, ...waitlist]);
+        setIsWaitlistModalOpen(false);
+        setWaitlistForm({ clientName: '', phone: '', courtType: 'Sintética', timeSlot: '19:00', date: TODAY_STR, notes: '' });
+        showToast(`Cliente ${newEntry.clientName} adicionado à lista de espera!`);
+      };
+
+      const handleRemoveWaitlist = (id) => {
+        setWaitlist(waitlist.filter(w => w.id !== id));
+        showToast('Item removido da lista de espera.');
+      };
 
       const [isNewComandaModalOpen, setIsNewComandaModalOpen] = useState(false);
       const [comandaOpenMode, setComandaOpenMode] = useState('mesas');
@@ -470,7 +666,8 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [initialFloatInput, setInitialFloatInput] = useState('200.00');
       const [countedCashInput, setCountedCashInput] = useState('');
 
-      const showToast = (msg) => {
+      const showToast = (msg, soundType) => {
+        if (soundType !== "none") playSystemSound(soundType || "notify");
         setToastMessage(msg);
         setTimeout(() => setToastMessage(null), 3500);
       };
@@ -511,7 +708,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         }
 
         if (user.approvalStatus !== 'Aprovado') {
-          setLoginError('Sua conta ainda está pendente de aprovação / confirmação de pagamento pelo Administrador Vitalício 👑.');
+          setLoginError('Sua conta ainda está pendente de aprovação / confirmação de pagamento pelo Administrador PRO 👑.');
           return false;
         }
 
@@ -568,18 +765,18 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const handleLogout = () => {
         setLoggedUser({
           id: 'guest',
-          name: 'Visitante (Degustação)',
+          name: 'Visitante (Teste)',
           role: 'admin',
           email: 'degustacao@gestaobar.com',
           status: 'Ativo',
           approvalStatus: 'Aprovado',
-          planName: 'Degustação Grátis (Limites Ativos)',
+          planName: 'Teste Grátis (Limites Ativos)',
           validUntil: null
         });
         setIsProPlan(false);
         localStorage.setItem('gestao_bar_quadra_pro', 'false');
         setActiveTab('welcome');
-        showToast('Sessão encerrada. Você está no Modo Degustação Grátis.');
+        showToast('Sessão encerrada. Você está no Modo Teste Grátis.');
       };
 
       const handleRequestAccessSubmit = (e) => {
@@ -611,13 +808,13 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         setSystemUsers([...systemUsers, newRequest]);
         setIsRequestAccessModalOpen(false);
         setRequestUserForm({ name: '', email: '', password: '', selectedPlanId: 'mensal', role: 'recepcao' });
-        showToast(`Solicitação do plano "${selectedPlanObj.name}" enviada ao Administrador Vitalício 👑 para ativação!`);
+        showToast(`Solicitação do plano "${selectedPlanObj.name}" enviada ao Administrador PRO 👑 para ativação!`);
       };
 
       const handleSaveUser = (e) => {
         e.preventDefault();
         if (loggedUser.role !== 'admin') {
-          showToast('Operação negada: Apenas o Administrador Vitalício 👑 pode alterar cadastros.');
+          showToast('Operação negada: Apenas o Administrador PRO 👑 pode alterar cadastros.');
           return;
         }
 
@@ -707,11 +904,13 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
 
         if (editingBookingId) {
           setBookings(bookings.map(b => b.id === editingBookingId ? { ...bookingForm, id: editingBookingId, price: calculatedPrice } : b));
-          showToast('Agendamento atualizado com sucesso!');
+          playSystemSound("agenda");
+          showToast('Agendamento atualizado com sucesso!', 'none');
         } else {
           const newB = { id: `b-${Date.now()}`, ...bookingForm, price: calculatedPrice };
           setBookings([...bookings, newB]);
-          showToast('Nova reserva confirmada!');
+          playSystemSound("agenda");
+          showToast('Nova reserva confirmada!', 'none');
         }
         setIsBookingModalOpen(false);
       };
@@ -825,6 +1024,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const totalAmount = cmd.total;
 
+        playSystemSound("cash");
         /* Record sale in history */
         const newSale = {
           id: `s-${Date.now()}`,
@@ -920,6 +1120,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         const floatVal = parseFloat(initialFloatInput) || 0;
         const timeNow = new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 
+        playSystemSound("box_open");
         setCashShift({
           isOpen: true,
           openedAt: timeNow,
@@ -948,6 +1149,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         const expected = cashCalculations.cashInHand;
         const diff = counted - expected;
 
+        playSystemSound("box_close");
         setCashShift({
           ...cashShift,
           isOpen: false,
@@ -975,12 +1177,12 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         if (isVitalicia1 || isVitalicia2) {
           const vitalicioUser = {
             id: isVitalicia1 ? 'v1' : 'v2',
-            name: isVitalicia1 ? 'Leandro (Mestre Vitalício 1)' : 'Leandro (Mestre Vitalício 2)',
+            name: 'Modo Master',
             role: 'admin',
             email: isVitalicia1 ? 'vitalicia1@gestaobar.com' : 'vitalicia2@gestaobar.com',
             status: 'Ativo',
             approvalStatus: 'Aprovado',
-            planName: '👑 Acesso Vitalício Irrestrito',
+            planName: '👑 Acesso PRO Irrestrito',
             validUntil: null
           };
           setLoggedUser(vitalicioUser);
@@ -1063,9 +1265,21 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               </div>
 
               <div 
-                onClick={() => setActiveTab('cashier')}
-                className="bg-white/95 backdrop-blur-xs p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-600 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => {
+                  if (!isProPlan) {
+                    setProModalReason('O Fechamento e Controle de Caixa são recursos exclusivos do Plano PRO!');
+                    setIsProModalOpen(true);
+                    return;
+                  }
+                  setActiveTab('cashier');
+                }}
+                className="bg-white/95 backdrop-blur-xs p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-600 hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
               >
+                {!isProPlan && (
+                  <span className="absolute top-3 right-3 bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide">
+                    PRO
+                  </span>
+                )}
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Gaveta do Caixa</span>
                   <span className="p-2 bg-emerald-50 text-emerald-800 rounded-xl group-hover:scale-110 transition-transform"><LandmarkIcon size={18} /></span>
@@ -1135,18 +1349,21 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         );
       };
 
-      const renderBookings = () => (
+      const renderBookings = () => {
+        const isAllowedDate = isProPlan || (selectedDate === TODAY_STR || selectedDate === TOMORROW_STR);
+        const allowedSlotsInTest = TIME_SLOTS.slice(0, 3); // Apenas 3 horários no modo teste: 08:00, 09:00, 10:00
+
+        return (
         <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
           <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center space-x-3">
-
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer"
-                  title="Abrir Menu"
-                >
-                  <MenuIcon size={20} />
-                </button>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer"
+                title="Abrir Menu"
+              >
+                <MenuIcon size={20} />
+              </button>
 
               <label className="text-xs font-bold uppercase text-slate-500 flex items-center">
                 <CalendarIcon size={16} className="mr-1.5 text-emerald-800" /> Data Selecionada:
@@ -1155,31 +1372,64 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 type="date"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
-                className="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
+                className={`p-2 bg-slate-50 border rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 ${!isAllowedDate ? 'border-amber-400 bg-amber-50/50' : 'border-slate-200'}`}
               />
+              {!isProPlan && (
+                <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2.5 py-1 rounded-full border border-amber-300 hidden sm:inline-flex items-center space-x-1">
+                  <span>🔒</span>
+                  <span>Modo Teste: Máx. 2 dias e 3 horários</span>
+                </span>
+              )}
             </div>
 
             <div className="flex items-center space-x-3 text-xs font-bold">
               <div className="flex items-center space-x-1">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span className="text-slate-600">🟢 Pago / Confirmado</span>
+                <span className="text-slate-600">🟢 Confirmado</span>
               </div>
               <div className="flex items-center space-x-1">
                 <span className="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
                 <span className="text-slate-600">🟡 Pendente</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span className="text-slate-600">🔴 Cancelado / Bloqueado</span>
-              </div>
+              {!isProPlan && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded font-black">PRO</span>
+                  <span className="text-slate-600">🔒 Bloqueado</span>
+                </div>
+              )}
             </div>
           </div>
+
+          {!isAllowedDate && !isProPlan && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm animate-in fade-in">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                  🔒
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-900 flex items-center space-x-2">
+                    <span>Data indisponível no Modo Teste Grátis</span>
+                    <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">Exclusivo PRO</span>
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    No teste gratuito estão liberados apenas <strong>2 dias</strong> (hoje e amanhã). Para liberar agendamentos em qualquer dia do mês ou ano, ative sua Conta PRO!
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsProModalOpen(true)}
+                className="shrink-0 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                Desbloquear Todas as Datas no PRO
+              </button>
+            </div>
+          )}
 
           <div className="bg-white/95 backdrop-blur-xs rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-900 text-white text-xs uppercase tracking-wider">
-                  <th className="p-3 font-bold border-b border-slate-800 w-24">Horário</th>
+                  <th className="p-3 font-bold border-b border-slate-800 w-28">Horário</th>
                   {courts.map(c => (
                     <th key={c.id} className="p-3 font-bold border-b border-slate-800">
                       <div className="flex items-center space-x-1.5">
@@ -1192,74 +1442,97 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {TIME_SLOTS.map(slot => (
-                  <tr key={slot} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 font-mono font-bold text-slate-700 bg-slate-50/50">{slot}</td>
-                    {courts.map(court => {
-                      const booking = bookings.find(b => b.courtId === court.id && b.timeSlot === slot && b.date === selectedDate);
-                      return (
-                        <td key={court.id} className="p-2 border-l border-slate-100">
-                          {booking ? (
-                            <div
-                              onClick={() => {
-                                setEditingBookingId(booking.id);
-                                setBookingForm({
-                                  courtId: booking.courtId,
-                                  date: booking.date,
-                                  timeSlot: booking.timeSlot,
-                                  clientName: booking.clientName,
-                                  phone: booking.phone || '',
-                                  paymentStatus: booking.paymentStatus,
-                                  price: booking.price || 150
-                                });
-                                setIsBookingModalOpen(true);
-                              }}
-                              className={`p-2.5 rounded-xl cursor-pointer transition-all shadow-2xl ${
-                                booking.paymentStatus === 'Pago'
-                                  ? 'bg-emerald-500 text-white font-extrabold hover:bg-emerald-600'
-                                  : 'bg-amber-400 text-slate-950 font-black hover:bg-amber-500'
-                              }`}
-                            >
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-[10px] uppercase font-black">
-                                  {booking.paymentStatus === 'Pago' ? '🟢 PAGO' : '🟡 PENDENTE'}
-                                </span>
-                                <span className="text-[10px] font-mono">R$ {(booking.price || court.pricePerHour).toFixed(2)}</span>
-                              </div>
-                              <p className="font-black text-xs truncate">{booking.clientName}</p>
-                              {booking.phone && <p className="text-[10px] opacity-90 truncate">{booking.phone}</p>}
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setEditingBookingId(null);
-                                setBookingForm({
-                                  courtId: court.id,
-                                  date: selectedDate,
-                                  timeSlot: slot,
-                                  clientName: '',
-                                  phone: '',
-                                  paymentStatus: 'Pendente',
-                                  price: court.pricePerHour
-                                });
-                                setIsBookingModalOpen(true);
-                              }}
-                              className="w-full py-2.5 border-2 border-dashed border-slate-200 hover:border-emerald-500 text-slate-400 hover:text-emerald-700 font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1"
-                            >
-                              <PlusIcon size={14} />
-                              <span>Livre</span>
-                            </button>
+                {TIME_SLOTS.map((slot, slotIdx) => {
+                  const isSlotUnlocked = isProPlan || (isAllowedDate && allowedSlotsInTest.includes(slot));
+
+                  return (
+                    <tr key={slot} className={`transition-colors ${!isSlotUnlocked ? 'bg-slate-50/70' : 'hover:bg-slate-50'}`}>
+                      <td className="p-3 font-mono font-bold text-slate-700 bg-slate-50/50">
+                        <div className="flex items-center space-x-1.5">
+                          <span>{slot}</span>
+                          {!isSlotUnlocked && (
+                            <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-1 rounded shadow-2xs">PRO</span>
                           )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                      {courts.map(court => {
+                        const booking = bookings.find(b => b.courtId === court.id && b.timeSlot === slot && b.date === selectedDate);
+                        
+                        return (
+                          <td key={court.id} className="p-2 border-l border-slate-100">
+                            {booking ? (
+                              <div
+                                onClick={() => {
+                                  setEditingBookingId(booking.id);
+                                  setBookingForm({
+                                    courtId: booking.courtId,
+                                    date: booking.date,
+                                    timeSlot: booking.timeSlot,
+                                    clientName: booking.clientName,
+                                    phone: booking.phone || '',
+                                    paymentStatus: booking.paymentStatus,
+                                    price: booking.price || 150
+                                  });
+                                  setIsBookingModalOpen(true);
+                                }}
+                                className={`p-2.5 rounded-xl cursor-pointer transition-all shadow-2xl ${
+                                  booking.paymentStatus === 'Pago'
+                                    ? 'bg-emerald-500 text-white font-extrabold hover:bg-emerald-600'
+                                    : 'bg-amber-400 text-slate-950 font-black hover:bg-amber-500'
+                                }`}
+                              >
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-[10px] uppercase font-black">
+                                    {booking.paymentStatus === 'Pago' ? '🟢 PAGO' : '🟡 PENDENTE'}
+                                  </span>
+                                  <span className="text-[10px] font-mono">R$ {(booking.price || court.pricePerHour).toFixed(2)}</span>
+                                </div>
+                                <p className="font-black text-xs truncate">{booking.clientName}</p>
+                                {booking.phone && <p className="text-[10px] opacity-90 truncate">{booking.phone}</p>}
+                              </div>
+                            ) : !isSlotUnlocked ? (
+                              <button
+                                onClick={() => setIsProModalOpen(true)}
+                                className="w-full py-2.5 bg-slate-100/90 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1 text-slate-400 hover:text-amber-800 group"
+                                title="Horário bloqueado no Modo Teste. Clique para desbloquear no Plano PRO"
+                              >
+                                <LockIcon size={12} className="text-slate-400 group-hover:text-amber-600" />
+                                <span className="text-[11px] font-bold">Bloqueado</span>
+                                <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded shadow-2xs">PRO</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingBookingId(null);
+                                  setBookingForm({
+                                    courtId: court.id,
+                                    date: selectedDate,
+                                    timeSlot: slot,
+                                    clientName: '',
+                                    phone: '',
+                                    paymentStatus: 'Pendente',
+                                    price: court.pricePerHour
+                                  });
+                                  setIsBookingModalOpen(true);
+                                }}
+                                className="w-full py-2.5 border-2 border-dashed border-slate-200 hover:border-emerald-500 text-slate-400 hover:text-emerald-700 font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1"
+                              >
+                                <PlusIcon size={14} />
+                                <span>Livre</span>
+                              </button>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       );
+      };
 
       const renderWaitlist = () => (
         <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
@@ -1334,6 +1607,10 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => {
+                      if (!isProPlan) {
+                        triggerProModal('O cadastro de novos produtos no bar é exclusivo do Plano PRO!');
+                        return;
+                      }
                       setEditingProductId(null);
                       setProductForm({ name: '', category: 'Bebidas', price: '', stock: '20', minStock: '10', icon: '🍺' });
                       setIsProductModalOpen(true);
@@ -1342,27 +1619,57 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   >
                     <PlusIcon size={14} />
                     <span>Novo Produto 🍺</span>
+                    {!isProPlan && (
+                      <span className="bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide ml-1">
+                        PRO
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {products.map(p => (
-                  <div
-                    key={p.id}
-                    onClick={() => handleAddItemToComanda(p)}
-                    className="p-4 bg-white/95 backdrop-blur-xs border border-slate-200 rounded-2xl hover:border-emerald-600 hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    <span className="text-3xl block mb-2">{p.icon}</span>
-                    <p className="font-bold text-xs text-slate-800 truncate group-hover:text-emerald-800">{p.name}</p>
-                    <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100">
-                      <span className={`text-[10px] font-bold ${p.stock <= p.minStock ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {p.stock} un. {p.stock <= p.minStock && '⚠️'}
-                      </span>
-                      <span className="font-black text-xs text-emerald-800">R$ {p.price.toFixed(2)}</span>
+                {products.map((p, idx) => {
+                  const isLocked = !isProPlan && idx >= 2;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        if (isLocked) {
+                          triggerProModal('No modo de teste apenas 2 produtos ficam liberados no bar. Assine o Plano PRO para lançar todos os itens!');
+                          return;
+                        }
+                        handleAddItemToComanda(p);
+                      }}
+                      className={`p-4 rounded-2xl transition-all cursor-pointer group relative ${
+                        isLocked
+                          ? 'bg-slate-100 border-2 border-dashed border-amber-300 opacity-75 hover:border-amber-500'
+                          : 'bg-white/95 backdrop-blur-xs border border-slate-200 hover:border-emerald-600 hover:shadow-md'
+                      }`}
+                    >
+                      {isLocked && (
+                        <div className="absolute top-2 right-2">
+                          <span className="bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide flex items-center space-x-0.5">
+                            <span>🔒</span>
+                            <span>PRO</span>
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-3xl block mb-2">{p.icon}</span>
+                      <p className="font-bold text-xs text-slate-800 truncate group-hover:text-emerald-800">{p.name}</p>
+                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100">
+                        {isLocked ? (
+                          <span className="text-[10px] font-bold text-amber-800">Bloqueado no Teste</span>
+                        ) : (
+                          <span className={`text-[10px] font-bold ${p.stock <= p.minStock ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {p.stock} un. {p.stock <= p.minStock && '⚠️'}
+                          </span>
+                        )}
+                        <span className="font-black text-xs text-emerald-800">R$ {p.price.toFixed(2)}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1373,11 +1680,22 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                     <ReceiptIcon size={18} className="mr-2 text-emerald-800" /> Comandas Abertas
                   </h3>
                   <button
-                    onClick={() => setIsNewComandaModalOpen(true)}
+                    onClick={() => {
+                      if (!isProPlan && comandas.filter(c => c.status === 'open').length >= 2) {
+                        triggerProModal('O limite do Modo Teste é de até 2 comandas abertas simultaneamente. Assine o Plano PRO para comandas ilimitadas!');
+                        return;
+                      }
+                      setIsNewComandaModalOpen(true);
+                    }}
                     className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 cursor-pointer shadow-xs"
                   >
                     <PlusIcon size={14} />
                     <span>Abrir Mesa/Comanda</span>
+                    {!isProPlan && comandas.filter(c => c.status === 'open').length >= 2 && (
+                      <span className="bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide ml-1">
+                        PRO
+                      </span>
+                    )}
                   </button>
                 </div>
 
@@ -1562,8 +1880,38 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         </div>
       );
 
-      const renderCashier = () => (
-        <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
+      const renderCashier = () => {
+        if (!isProPlan) {
+          return (
+            <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
+              <div className="bg-white/95 backdrop-blur-xs rounded-3xl p-8 sm:p-12 border border-amber-200 shadow-xl text-center max-w-2xl mx-auto my-8">
+                <div className="w-16 h-16 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                  <LandmarkIcon size={32} />
+                </div>
+                <div className="inline-flex items-center space-x-1.5 bg-amber-400 text-amber-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-4 shadow-xs">
+                  <SparklesIcon size={14} />
+                  <span>Recurso Exclusivo PRO</span>
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mb-2">Fechamento de Caixa Bloqueado</h2>
+                <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                  No modo de teste gratuito, a abertura de turno, sangrias, suprimentos e o fechamento com conferência de caixa são bloqueados. Assine o <strong>Plano PRO</strong> para ter o controle financeiro completo do seu negócio.
+                </p>
+                <button
+                  onClick={() => {
+                    setProModalReason('O Fechamento e Controle de Caixa são recursos exclusivos do Plano PRO!');
+                    setIsProModalOpen(true);
+                  }}
+                  className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-black px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:shadow-emerald-600/30 transition-all cursor-pointer"
+                >
+                  ⭐ Desbloquear Plano PRO Agora
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
           <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-6 border border-slate-200 shadow-xs">
             <div className="flex justify-between items-center mb-6">
               <div>
@@ -1599,6 +1947,10 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 {cashShift.isOpen ? (
                   <button
                     onClick={() => {
+                      if (!isProPlan) {
+                        triggerProModal('O Fechamento e Sangria/Suprimento de Caixa é um recurso exclusivo do Plano PRO.');
+                        return;
+                      }
                       setShiftModalMode('close');
                       setCountedCashInput(cashCalculations.cashInHand.toFixed(2));
                       setIsCashShiftModalOpen(true);
@@ -1688,6 +2040,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
           </div>
         </div>
       );
+      };
 
       const renderReports = () => {
         const filteredBookings = bookings.filter(b => b.date >= reportStartDate && b.date <= reportEndDate);
@@ -1822,7 +2175,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   <UsersIcon size={22} className="mr-2 text-emerald-800" /> Usuários, Planos e Validade de Acesso
                 </h2>
                 <p className="text-xs text-slate-500">
-                  {loggedUser.role === 'admin' ? 'Aprovação de assinaturas, renovação de planos e alteração de privilégios exclusivos do Administrador Vitalício 👑.' : 'Visualização dos usuários e licenças ativas.'}
+                  {loggedUser.role === 'admin' ? 'Aprovação de assinaturas, renovação de planos e alteração de privilégios exclusivos do Administrador PRO 👑.' : 'Visualização dos usuários e licenças ativas.'}
                 </p>
               </div>
 
@@ -1940,6 +2293,10 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
 
               <button
                 onClick={() => {
+                  if (!isProPlan) {
+                    triggerProModal('O cadastro de novas quadras é exclusivo do Plano PRO!');
+                    return;
+                  }
                   setEditingCourtId(null);
                   setNewCourt({ name: '', type: 'Sintética', pricePerHour: 150 });
                   setIsCourtModalOpen(true);
@@ -1948,37 +2305,74 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               >
                 <PlusIcon size={16} />
                 <span>Cadastrar Quadra</span>
+                {!isProPlan && (
+                  <span className="bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide ml-1">
+                    PRO
+                  </span>
+                )}
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {courts.map(court => (
-                <div key={court.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl relative">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-3xl p-2 bg-white rounded-xl shadow-xs">{court.icon}</span>
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={() => {
-                          setEditingCourtId(court.id);
-                          setNewCourt({ name: court.name, type: court.type, pricePerHour: court.pricePerHour });
-                          setIsCourtModalOpen(true);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-emerald-700 rounded-lg cursor-pointer"
-                      >
-                        <EditIcon size={16} />
-                      </button>
+              {courts.map((court, idx) => {
+                const isLocked = !isProPlan && idx >= 2;
+                return (
+                  <div 
+                    key={court.id} 
+                    onClick={() => {
+                      if (isLocked) {
+                        triggerProModal('No modo de teste apenas 2 quadras ficam disponíveis. Assine o Plano PRO para gerenciar quadras ilimitadas!');
+                      }
+                    }}
+                    className={`p-4 rounded-2xl relative transition-all ${
+                      isLocked 
+                        ? 'bg-slate-100 border-2 border-dashed border-amber-300 opacity-80 cursor-pointer hover:border-amber-500' 
+                        : 'bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-3xl p-2 bg-white rounded-xl shadow-xs">{court.icon}</span>
+                      <div className="flex items-center space-x-1">
+                        {isLocked ? (
+                          <span className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded shadow-xs uppercase tracking-wide flex items-center space-x-1">
+                            <span>🔒</span>
+                            <span>PRO</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCourtId(court.id);
+                              setNewCourt({ name: court.name, type: court.type, pricePerHour: court.pricePerHour });
+                              setIsCourtModalOpen(true);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-emerald-700 rounded-lg cursor-pointer"
+                          >
+                            <EditIcon size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <h3 className="font-bold text-slate-800 text-sm">{court.name}</h3>
-                  <p className="text-xs text-slate-500">Piso: {court.type}</p>
+                    <h3 className="font-bold text-slate-800 text-sm flex items-center space-x-1.5">
+                      <span>{court.name}</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">Piso: {court.type}</p>
 
-                  <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Preço p/ Hora</span>
-                    <span className="text-sm font-black text-emerald-800">R$ {court.pricePerHour.toFixed(2)}</span>
+                    {isLocked ? (
+                      <div className="mt-4 pt-3 border-t border-amber-200/80 flex justify-between items-center text-amber-900 font-extrabold text-[11px]">
+                        <span>🔒 Bloqueado no Teste</span>
+                        <span className="text-xs text-amber-800 underline">Liberar no PRO →</span>
+                      </div>
+                    ) : (
+                      <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Preço p/ Hora</span>
+                        <span className="text-sm font-black text-emerald-800">R$ {court.pricePerHour.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1990,8 +2384,8 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         { id: 'waitlist', label: 'Lista de Espera', icon: ClockIcon, badge: waitlist.length || null },
         { id: 'pos', label: 'Bar & PDV', icon: WineIcon, badge: comandas.length || null },
         { id: 'stock', label: 'Estoque do Bar', icon: BoxIcon, badge: products.filter(p => p.stock <= p.minStock).length || null },
-        { id: 'cashier', label: 'Fechamento Caixa', icon: LandmarkIcon },
-        { id: 'reports', label: 'Relatórios & PDF', icon: FileTextIcon },
+        { id: 'cashier', label: 'Fechamento Caixa', icon: LandmarkIcon, isProOnly: true },
+        { id: 'reports', label: 'Relatórios & PDF', icon: FileTextIcon, isProOnly: true },
         { id: 'courts', label: 'Quadras & Preços', icon: SettingsIcon }
       ];
 
@@ -2000,9 +2394,16 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
           <WatermarkBackground />
 
           {toastMessage && (
-            <div className="fixed top-5 right-5 z-50 bg-slate-950 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-700/40 text-xs font-bold flex items-center space-x-2 animate-in slide-in-from-top-3">
-              <SparklesIcon size={16} className="text-emerald-400" />
-              <span>{toastMessage}</span>
+            <div className="fixed top-5 right-5 z-50 bg-slate-950/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-700/40 text-xs font-bold flex items-center space-x-3 animate-in slide-in-from-top-3 backdrop-blur-md">
+              <SparklesIcon size={16} className="text-emerald-400 flex-shrink-0" />
+              <span className="pr-2">{toastMessage}</span>
+              <button 
+                onClick={() => setToastMessage(null)} 
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors ml-2"
+                title="Fechar notificação"
+              >
+                ✕
+              </button>
             </div>
           )}
 
@@ -2064,6 +2465,16 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                     <button
                       key={item.id}
                       onClick={() => {
+                        if (item.isProOnly && !isProPlan) {
+                          if (item.id === 'cashier') {
+                            setProModalReason('O Fechamento e Controle de Caixa são recursos exclusivos do Plano PRO!');
+                          } else {
+                            setProModalReason('Os Relatórios Financeiros e Exportação em PDF são exclusivos do Plano Pro!');
+                          }
+                          setIsProModalOpen(true);
+                          setIsMobileMenuOpen(false);
+                          return;
+                        }
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
@@ -2078,7 +2489,12 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                         <Icon size={18} />
                         {showLabel && <span>{item.label}</span>}
                       </div>
-                      {showLabel && item.badge && (
+                      {showLabel && item.isProOnly && !isProPlan && (
+                        <span className="bg-amber-400 text-amber-950 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wide">
+                          PRO
+                        </span>
+                      )}
+                      {showLabel && item.badge && !item.isProOnly && (
                         <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
                           {item.badge}
                         </span>
@@ -2099,7 +2515,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
           </aside>
 
           <main className="flex-1 flex flex-col min-w-0 max-w-full overflow-y-auto overflow-x-hidden relative z-10">
-            {/* Top Degustação / Pro Announcement Banner */}
+            {/* Top Teste / Pro Announcement Banner */}
             <div className={`px-3 sm:px-6 py-2 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold no-print transition-all w-full overflow-hidden ${
               isProPlan 
                 ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-emerald-100 border-b border-emerald-700' 
@@ -2109,15 +2525,15 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 <span className="text-sm sm:text-base">{isProPlan ? '👑' : '⭐'}</span>
                 <span className="text-[11px] sm:text-xs leading-tight">
                   {isProPlan 
-                    ? 'Conta PRO Vitalícia Ativa — Tudo 100% liberado!' 
-                    : 'Modo Degustação Grátis (Máx. 2 itens por função)'}
+                    ? 'Conta PRO Ativa — Tudo 100% liberado!' 
+                    : 'Modo Teste Grátis (Máx. 2 itens por função)'}
                 </span>
               </div>
               <div className="flex items-center space-x-2 justify-center sm:justify-end w-full sm:w-auto">
                 <button
                   onClick={() => {
                     if (!isProPlan) {
-                      setProModalReason('A personalização de Logomarca e Título do Sistema é um recurso exclusivo da Conta PRO Vitalícia!');
+                      setProModalReason('A personalização de Logomarca e Título do Sistema é um recurso exclusivo da Conta PRO!');
                       setIsProModalOpen(true);
                     } else {
                       setBrandingForm({ title: branding.title, logoUrl: branding.logoUrl || '', emoji: branding.emoji || '' });
@@ -2128,28 +2544,24 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                 >
                   <span>🎨</span>
                   <span>Marca / Logo</span>
-                  {!isProPlan && <span className="bg-amber-300 text-slate-950 text-[9px] px-1 rounded-sm ml-1">PRO</span>}
+                  {!isProPlan && <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.5 rounded shadow-xs ml-1">PRO</span>}
                 </button>
 
                 {!isProPlan ? (
                   <button
                     onClick={() => {
-                      setProModalReason('Adquira a Conta PRO Vitalícia para ter acesso ilimitado a todas as ferramentas!');
+                      setProModalReason('Adquira a Conta PRO para ter acesso ilimitado a todas as ferramentas!');
                       setIsProModalOpen(true);
                     }}
                     className="w-full sm:w-auto px-3.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm cursor-pointer animate-pulse text-center"
                   >
                     🔓 Desbloquear PRO (R$ 368 ou 12x)
                   </button>
-                ) : (
-                  <span className="bg-emerald-600/80 text-white text-[10px] px-2.5 py-1 rounded-full border border-emerald-400/50">
-                    Selo Vitalício Ativo
-                  </span>
-                )}
+                ) : null}
               </div>
             </div>
 
-            <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 sm:py-4 flex justify-between items-center sticky top-0 z-20 no-print max-w-full overflow-hidden">
+            <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 sm:py-4 flex justify-between items-center sticky top-0 z-30 no-print max-w-full">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -2168,47 +2580,164 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               </div>
 
               <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-                {!isProPlan && (
-                  <button
-                    onClick={() => setIsProModalOpen(true)}
-                    className="flex items-center space-x-1 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-amber-50 sm:bg-white border border-amber-200 sm:border-slate-200 hover:border-amber-300 rounded-full text-[11px] sm:text-xs font-bold text-amber-900 sm:text-slate-700 shadow-xs transition-all cursor-pointer"
-                  >
-                    <SparklesIcon size={14} className="text-amber-500" />
-                    <span>Conhecer Pro</span>
-                  </button>
-                )}
                 <button
-                  onClick={() => showToast('Nenhuma notificação nova por enquanto.')}
-                  className="p-1.5 sm:p-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-500 hover:text-slate-700 shadow-xs transition-all cursor-pointer relative hidden sm:block"
-                  title="Notificações"
+                  onClick={toggleSound}
+                  title={isSoundEnabled ? "Sons do sistema ativados (clique para silenciar)" : "Sons do sistema desativados (clique para ativar)"}
+                  className={`px-2 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${isSoundEnabled ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-400 border border-slate-300'}`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                  <span className="text-sm">{isSoundEnabled ? '🔊' : '🔇'}</span>
+                  <span className="hidden lg:inline text-[10px]">{isSoundEnabled ? 'Som Ativo' : 'Mudo'}</span>
                 </button>
-                {isProPlan ? (
+                {/* Sino de Notificações com Alertas de Estoque e Sistema */}
+                <div className="relative">
+                  {(() => {
+                    const lowStockItems = products.filter(p => p.stock <= p.minStock);
+                    const systemAlertsCount = lowStockItems.length + (waitlist.length > 0 ? 1 : 0);
+                    return (
+                      <React.Fragment>
+                        <button
+                          onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                          title="Central de Notificações e Alertas"
+                          className="relative p-2 rounded-full text-slate-700 hover:text-slate-950 bg-white hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer flex items-center justify-center shadow-xs"
+                        >
+                          <BellIcon size={17} className={systemAlertsCount > 0 ? "text-amber-600 animate-bounce" : "text-slate-600"} />
+                          {systemAlertsCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                              {systemAlertsCount}
+                            </span>
+                          )}
+                        </button>
+
+                        {isNotificationsOpen && (
+                          <React.Fragment>
+                            <div 
+                              className="fixed inset-0 z-40 bg-black/20 md:bg-transparent" 
+                              onClick={() => setIsNotificationsOpen(false)} 
+                            />
+                            <div className="absolute right-0 top-full mt-2 w-[310px] sm:w-96 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                            <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <BellIcon size={16} className="text-amber-400" />
+                                <span className="text-xs font-black uppercase tracking-wider">Notificações do Sistema</span>
+                              </div>
+                              <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full">
+                                {systemAlertsCount} {systemAlertsCount === 1 ? 'alerta' : 'alertas'}
+                              </span>
+                            </div>
+
+                            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 text-xs">
+                              {lowStockItems.length > 0 && (
+                                <div className="p-3 bg-amber-50/50">
+                                  <div className="flex items-center space-x-1.5 text-amber-900 font-black text-[11px] mb-2">
+                                    <AlertTriangleIcon size={14} className="text-amber-600" />
+                                    <span>Alerta de Reposição de Estoque</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    {lowStockItems.map(item => (
+                                      <div key={item.id} className="bg-white p-2.5 rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <div className="flex items-center space-x-1 font-bold text-slate-800 text-xs truncate">
+                                            <span>{item.icon || '📦'}</span>
+                                            <span className="truncate">{item.name}</span>
+                                          </div>
+                                          <p className="text-[10px] text-red-600 font-semibold mt-0.5">
+                                            {item.stock === 0 ? '❌ Estoque ESGOTADO!' : `⚠️ Restam apenas ${item.stock} un. (Mínimo: ${item.minStock} un.)`}
+                                          </p>
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            setActiveTab('stock');
+                                            setIsNotificationsOpen(false);
+                                          }}
+                                          className="shrink-0 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                                        >
+                                          Repor
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {waitlist.length > 0 && (
+                                <div className="p-3 hover:bg-slate-50 transition-colors flex items-center justify-between gap-2">
+                                  <div className="flex items-center space-x-2">
+                                    <ClockIcon size={16} className="text-blue-600 shrink-0" />
+                                    <div>
+                                      <p className="font-bold text-slate-800 text-xs">{waitlist.length} clientes na Lista de Espera</p>
+                                      <p className="text-[10px] text-slate-500">Aguardando quadra ou horário disponível</p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setActiveTab('waitlist');
+                                      setIsNotificationsOpen(false);
+                                    }}
+                                    className="shrink-0 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Ver
+                                  </button>
+                                </div>
+                              )}
+
+                              {systemAlertsCount === 0 && (
+                                <div className="p-6 text-center text-slate-500">
+                                  <span className="text-2xl block mb-1">🎉</span>
+                                  <p className="font-bold text-xs text-slate-700">Tudo em dia!</p>
+                                  <p className="text-[11px] text-slate-400">Estoque abastecido e nenhum alerta pendente.</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="p-2 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-[10px]">
+                              <button
+                                onClick={() => { setActiveTab('stock'); setIsNotificationsOpen(false); }}
+                                className="text-emerald-700 font-bold hover:underline cursor-pointer"
+                              >
+                                Ver Todo Estoque →
+                              </button>
+                              <button
+                                onClick={() => setIsNotificationsOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 font-medium cursor-pointer"
+                              >
+                                Fechar
+                              </button>
+                            </div>
+                          </div>
+                          </React.Fragment>
+                        )}
+                      </React.Fragment>
+                    );
+                  })()}
+                </div>
+
+                {!isProPlan ? (
                   <React.Fragment>
-                    <span className="text-xs font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hidden sm:inline">
-                      {ROLES.find(r => r.id === loggedUser?.role)?.icon} {loggedUser?.name}
-                    </span>
                     <button
-                      onClick={handleLogout}
-                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-slate-600 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
+                      onClick={() => setIsProModalOpen(true)}
+                      className="flex items-center space-x-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-full text-[11px] sm:text-xs font-black shadow-md transition-all cursor-pointer transform active:scale-95"
                     >
-                      Sair
+                      <SparklesIcon size={14} className="text-amber-300" />
+                      <span>Criar Conta PRO</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowAuthScreen('login'); setAuthError(''); }}
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white hover:bg-slate-100 border border-slate-300 rounded-full text-slate-800 text-[11px] sm:text-xs font-bold transition-colors cursor-pointer flex items-center space-x-1"
+                    >
+                      <span>Entrar</span>
                     </button>
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
+                    <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 flex items-center space-x-1">
+                      <span>👑</span>
+                      <span className="hidden sm:inline">{loggedUser?.name || 'Conta PRO'}</span>
+                    </span>
                     <button
-                      onClick={() => setShowAuthScreen('login')}
-                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-slate-700 hover:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
+                      onClick={handleLogout}
+                      className="px-2.5 sm:px-3 py-1.5 text-slate-600 hover:text-red-600 text-xs font-bold transition-colors cursor-pointer"
                     >
-                      Entrar
-                    </button>
-                    <button
-                      onClick={() => setShowAuthScreen('register')}
-                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
-                    >
-                      Criar conta
+                      Sair
                     </button>
                   </React.Fragment>
                 )}
@@ -2226,6 +2755,95 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               {activeTab === 'courts' && renderCourts()}
             </div>
           </main>
+
+          
+          {/* Modal Cadastro / Edição de Quadra */}
+          {isCourtModalOpen && (
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
+              <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-800 to-teal-800 px-6 py-4 flex justify-between items-center text-white">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">🏟️</span>
+                    <h3 className="font-extrabold text-base">
+                      {editingCourtId ? 'Editar Quadra' : 'Cadastrar Nova Quadra'}
+                    </h3>
+                  </div>
+                  <button 
+                    onClick={() => { setIsCourtModalOpen(false); setEditingCourtId(null); }}
+                    className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer text-lg"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveCourt} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Nome da Quadra / Espaço
+                    </label>
+                    <input 
+                      type="text"
+                      required
+                      placeholder="Ex: Quadra 01 - Sintética Master"
+                      value={newCourt.name}
+                      onChange={(e) => setNewCourt({ ...newCourt, name: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Tipo de Piso
+                      </label>
+                      <select 
+                        value={newCourt.type}
+                        onChange={(e) => setNewCourt({ ...newCourt, type: e.target.value })}
+                        className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+                      >
+                        <option value="Sintética">⚽ Sintética</option>
+                        <option value="Areia">🏖️ Areia</option>
+                        <option value="Rápida/Tênis">🎾 Rápida / Tênis</option>
+                        <option value="Outro">🏟️ Outro</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Preço por Hora (R$)
+                      </label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        placeholder="150.00"
+                        value={newCourt.pricePerHour}
+                        onChange={(e) => setNewCourt({ ...newCourt, pricePerHour: e.target.value })}
+                        className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => { setIsCourtModalOpen(false); setEditingCourtId(null); }}
+                      className="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                    >
+                      {editingCourtId ? 'Salvar Alterações' : 'Cadastrar Quadra'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Modal Booking */}
           {isBookingModalOpen && (
@@ -2638,19 +3256,10 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
               <div className="bg-slate-900 border-2 border-emerald-600 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col">
                 <div className="p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 border-b border-emerald-800 flex justify-between items-center">
                   <div className="flex items-center space-x-3">
-
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer"
-                  title="Abrir Menu"
-                >
-                  <MenuIcon size={20} />
-                </button>
-
                     <span className="p-2 bg-emerald-600 text-white rounded-xl text-lg font-black">👑</span>
                     <div>
-                      <h3 className="font-black text-base text-white tracking-wide uppercase">Conta PRO Vitalícia</h3>
-                      <p className="text-xs text-emerald-400 font-semibold">Gestão de Bar e Quadra • Acesso Total Permanente</p>
+                      <h3 className="font-black text-base text-white tracking-wide uppercase">Criar Conta PRO & Acesso Total</h3>
+                      <p className="text-xs text-emerald-400 font-semibold">Gestão de Bar e Quadra • Sem Mensalidades</p>
                     </div>
                   </div>
                   <button onClick={() => setIsProModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-full cursor-pointer">
@@ -2666,7 +3275,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                     </div>
                   )}
 
-                  {/* Promo Card exactly as requested */}
+                  {/* Promo Card com Preço */}
                   <div className="relative p-5 rounded-2xl bg-gradient-to-br from-emerald-900/90 via-slate-950 to-emerald-950 border-2 border-emerald-500 shadow-xl text-center">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 font-black text-[10px] uppercase px-3 py-0.5 rounded-full shadow-md tracking-wider">
                       ★ OFERTA ESPECIAL VITALÍCIA ★
@@ -2706,63 +3315,316 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                       </div>
                       <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2 text-slate-200">
                         <span className="text-emerald-400 font-black">✓</span>
-                        <span><strong>Personalização de Marca & Logo</strong></span>
+                        <span><strong>Relatórios & PDF Completos</strong></span>
+                      </div>
+                      <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2 text-slate-200 sm:col-span-2">
+                        <span className="text-emerald-400 font-black">✓</span>
+                        <span><strong>Fechamento & Controle de Caixa</strong></span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Pix Copy and Paste Simulation */}
-                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-emerald-400 flex items-center">
-                        <QrCodeIcon size={16} className="mr-1.5" /> Chave PIX Oficial (Copia e Cola)
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400">Mercado Pago / Banco Central</span>
-                    </div>
+                  {/* FORMULÁRIO DE CRIAR CONTA DO CLIENTE */}
+                  <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+                    <h4 className="text-xs font-extrabold uppercase text-emerald-400 tracking-wider flex items-center space-x-1.5">
+                      <span>👤</span>
+                      <span>1. Cadastre seus dados de acesso:</span>
+                    </h4>
 
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="text" 
-                        readOnly 
-                        value="00020126580014br.gov.bcb.pix0136gestao-bar-quadra-pro-vitalicio-3685204000053039865406368.005802BR5925LEANDRO TECNOLOGIA SISTEM6009SAO PAULO62070503***6304E8A2"
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[11px] text-slate-300 font-mono select-all outline-none"
-                      />
-                      <button
-                        onClick={() => {
-                          navigator.clipboard?.writeText("00020126580014br.gov.bcb.pix0136gestao-bar-quadra-pro-vitalicio-3685204000053039865406368.005802BR5925LEANDRO TECNOLOGIA SISTEM6009SAO PAULO62070503***6304E8A2");
-                          showToast('Código PIX copiado com sucesso!');
-                        }}
-                        className="px-3 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase shrink-0 cursor-pointer"
-                      >
-                        Copiar
-                      </button>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Seu Nome ou Nome do Estabelecimento</label>
+                        <input
+                          type="text"
+                          value={authName}
+                          onChange={(e) => setAuthName(e.target.value)}
+                          placeholder="Ex: Arena Bola de Ouro"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 mb-1">E-mail (Seu login)</label>
+                          <input
+                            type="email"
+                            value={authEmail}
+                            onChange={(e) => setAuthEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 mb-1">Senha de Acesso</label>
+                          <input
+                            type="password"
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            placeholder="Crie sua senha"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Botão Oficial Mercado Pago */}
-                    <div className="pt-3 space-y-2">
+                    <div className="pt-2 space-y-2">
                       <a
                         href="https://mpago.la/1i9ivFj"
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => {
+                          const clientName = authName.trim() || 'Cliente PRO';
+                          const clientEmail = authEmail.trim() || 'cliente@gestaobar.com';
+                          const clientUser = {
+                            id: 'pro_' + Date.now(),
+                            name: clientName,
+                            email: clientEmail,
+                            password: authPassword || '123',
+                            role: 'admin',
+                            status: 'Ativo',
+                            approvalStatus: 'Aprovado',
+                            planName: '👑 Conta PRO Vitalícia',
+                            validUntil: null
+                          };
+                          setLoggedUser(clientUser);
+                          toggleProPlan(true);
+        setIsProPlan(true);
+                          showToast('Redirecionando para o pagamento no Mercado Pago...');
+                        }}
                         className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all text-center cursor-pointer transform active:scale-95"
                       >
                         <SparklesIcon size={16} />
-                        <span>Acessar Link para Pagar no Mercado Pago</span>
+                        <span>Pagar no Mercado Pago & Liberar Conta PRO</span>
                         <ArrowRightIcon size={16} />
                       </a>
                       <p className="text-center text-[10px] text-slate-400">
                         Pix à vista R$ 368,00 ou até 12x de R$ 46,90 no cartão
                       </p>
+                    </div>
 
-                      <button
-                        onClick={() => toggleProPlan(true)}
-                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-bold rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer mt-2"
-                      >
-                        ⚡ Já Paguei / Confirmar Liberação Imediata
-                      </button>
+                    {/* PIX COPIA E COLA OPCIONAL */}
+                    <div className="pt-3 border-t border-slate-800 space-y-2">
+                      <div className="flex justify-between items-center text-[11px] text-slate-400 font-bold">
+                        <span>Ou pague direto via Chave Pix Copia e Cola:</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value="00020126580014br.gov.bcb.pix0136gestao-bar-quadra-pro-vitalicio-3685204000053039865406368.005802BR5925LEANDRO TECNOLOGIA SISTEM6009SAO PAULO62070503***6304E8A2"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[10px] text-slate-300 font-mono select-all outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard?.writeText("00020126580014br.gov.bcb.pix0136gestao-bar-quadra-pro-vitalicio-3685204000053039865406368.005802BR5925LEANDRO TECNOLOGIA SISTEM6009SAO PAULO62070503***6304E8A2");
+                            showToast('Código PIX copiado com sucesso!');
+                          }}
+                          className="px-3 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase shrink-0 cursor-pointer"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* LINK DIRETO PARA ENTRAR / LOGIN ABAIXO DO CADASTRO */}
+                    <div className="pt-3 border-t border-slate-800 text-center">
+                      <p className="text-xs text-slate-400">
+                        Já adquiriu o sistema ou é da equipe?{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProModalOpen(false);
+                            setShowAuthScreen('login');
+                            setAuthError('');
+                          }}
+                          className="text-emerald-400 hover:text-emerald-300 font-extrabold underline ml-1 cursor-pointer"
+                        >
+                          Entrar na sua conta aqui
+                        </button>
+                      </p>
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL LISTA DE ESPERA */}
+          {isWaitlistModalOpen && (
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                  <h2 className="font-extrabold text-slate-800 text-sm flex items-center">
+                    <ClockIcon size={18} className="mr-2 text-emerald-800" /> Adicionar à Lista de Espera
+                  </h2>
+                  <button onClick={() => setIsWaitlistModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <XIcon size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveWaitlist} className="p-5 space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nome do Cliente</label>
+                    <input
+                      type="text"
+                      required
+                      value={waitlistForm.clientName}
+                      onChange={e => setWaitlistForm({ ...waitlistForm, clientName: e.target.value })}
+                      placeholder="Ex: João Silva"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1">WhatsApp / Telefone</label>
+                      <input
+                        type="tel"
+                        required
+                        value={waitlistForm.phone}
+                        onChange={e => setWaitlistForm({ ...waitlistForm, phone: e.target.value })}
+                        placeholder="(11) 99999-9999"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Horário Desejado</label>
+                      <input
+                        type="time"
+                        required
+                        value={waitlistForm.timeSlot}
+                        onChange={e => setWaitlistForm({ ...waitlistForm, timeSlot: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Tipo de Quadra Desejada</label>
+                    <select
+                      value={waitlistForm.courtType}
+                      onChange={e => setWaitlistForm({ ...waitlistForm, courtType: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                    >
+                      <option value="Sintética">Quadra Sintética (Futebol / Society)</option>
+                      <option value="Areia">Quadra de Areia (Beach Tennis / Vôlei)</option>
+                      <option value="Poliesportiva">Quadra Poliesportiva</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Observações (Opcional)</label>
+                    <input
+                      type="text"
+                      value={waitlistForm.notes}
+                      onChange={e => setWaitlistForm({ ...waitlistForm, notes: e.target.value })}
+                      placeholder="Ex: Pode encaixar se vagar a partir das 18h"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition shadow-xs cursor-pointer"
+                    >
+                      Salvar na Lista de Espera
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL PÓS-PAGAMENTO MERCADO PAGO (OPÇÃO 1: TRANSAÇÃO APROVADA) */}
+          {isPostPaymentModalOpen && (
+            <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
+              <div className="bg-slate-900 border-2 border-emerald-500 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden text-slate-100 animate-in zoom-in-95">
+                <div className="p-6 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 border-b border-emerald-800 text-center">
+                  <div className="inline-flex p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl mb-2">
+                    <CheckCircle2Icon size={32} />
+                  </div>
+                  <h3 className="text-xl font-black text-white">Transação Confirmada!</h3>
+                  <p className="text-xs text-emerald-300 font-semibold mt-1">
+                    Seu pagamento no Mercado Pago foi aprovado com sucesso.
+                  </p>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!postPaymentData.name || !postPaymentData.email || !postPaymentData.password) {
+                    showToast('Por favor, preencha todos os campos do cadastro.');
+                    return;
+                  }
+
+                  const newProAccount = {
+                    id: 'pro_' + Date.now(),
+                    name: postPaymentData.name,
+                    email: postPaymentData.email,
+                    password: postPaymentData.password,
+                    role: 'admin',
+                    status: 'Ativo',
+                    approvalStatus: 'Aprovado',
+                    planName: '👑 Conta PRO Vitalícia',
+                    validUntil: null
+                  };
+
+                  setLoggedUser(newProAccount);
+                  toggleProPlan(true);
+        setIsProPlan(true);
+                  setIsPostPaymentModalOpen(false);
+                  showToast('Parabéns! Sua Conta PRO foi ativada com acesso ilimitado.');
+                }} className="p-6 space-y-4">
+                  <p className="text-xs text-slate-300 leading-relaxed text-center">
+                    Crie agora suas credenciais definitivas para acessar o sistema com todos os recursos PRO liberados.
+                  </p>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Seu Nome ou Nome do Estabelecimento</label>
+                    <input
+                      type="text"
+                      required
+                      value={postPaymentData.name}
+                      onChange={e => setPostPaymentData({ ...postPaymentData, name: e.target.value })}
+                      placeholder="Ex: Arena Bola de Ouro"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-bold outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail (Seu login de acesso)</label>
+                    <input
+                      type="email"
+                      required
+                      value={postPaymentData.email}
+                      onChange={e => setPostPaymentData({ ...postPaymentData, email: e.target.value })}
+                      placeholder="seu@email.com"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-bold outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Crie sua Senha de Acesso</label>
+                    <input
+                      type="password"
+                      required
+                      value={postPaymentData.password}
+                      onChange={e => setPostPaymentData({ ...postPaymentData, password: e.target.value })}
+                      placeholder="Sua senha secreta"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-bold outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
+                    >
+                      Liberar Acesso PRO & Entrar no Sistema →
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
@@ -2909,7 +3771,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
           {/* MODAL ENTRAR / CRIAR CONTA ESTILO DEZENEIRO (F2) */}
           {showAuthScreen && (
             <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 text-slate-800 border border-slate-100 flex flex-col max-h-[92vh]">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 text-slate-800 border border-slate-100 flex flex-col max-h-[92vh]">
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
                   <div className="flex items-center space-x-2">
                     <ArenaLogo className="w-8 h-8" />
@@ -2917,312 +3779,134 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   </div>
                   <button 
                     onClick={() => { setShowAuthScreen(null); setAuthError(''); }}
-                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-full transition"
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-full transition cursor-pointer"
                   >
                     <XIcon size={20} />
                   </button>
                 </div>
 
-                <div className="p-6 md:p-8 overflow-y-auto">
-                  {showAuthScreen === 'register' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                      {/* LADO ESQUERDO: CRIAR CONTA GRÁTIS */}
-                      <div className="md:col-span-7 space-y-5">
-                        <div className="space-y-1">
-                          <span className="text-xs font-bold text-emerald-600 tracking-wider uppercase">Degustação</span>
-                          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Crie sua conta grátis.</h2>
-                          <p className="text-slate-500 text-sm">Sem senha pra lembrar, sem cadastro chato.</p>
-                        </div>
+                <div className="p-6 md:p-8 overflow-y-auto space-y-5">
+                  <div className="text-center space-y-1">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Entrar na sua conta</h2>
+                    <p className="text-slate-500 text-xs">Acesso para clientes PRO e equipe técnica de manutenção</p>
+                  </div>
 
-                        {authError && (
-                          <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold flex items-center space-x-2">
-                            <AlertTriangleIcon size={16} />
-                            <span>{authError}</span>
-                          </div>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const email = 'usuario@gmail.com';
-                            const normalUser = {
-                              id: 'usr_' + Date.now(),
-                              name: 'Usuário Conectado',
-                              email: email,
-                              role: 'admin',
-                              plan: 'free',
-                              approvalStatus: 'Aprovado'
-                            };
-                            setCurrentUser(normalUser);
-                            setShowAuthScreen(null);
-                            showToast('Conta criada com sucesso via Google!');
-                          }}
-                          className="w-full py-3.5 px-4 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-2xl font-bold text-slate-700 flex items-center justify-center space-x-3 transition shadow-xs text-sm"
-                        >
-                          <svg className="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                          </svg>
-                          <span>Continuar com Google</span>
-                        </button>
-
-                        <div className="flex items-center space-x-3">
-
-                <div className="flex-1 h-px bg-slate-200"></div>
-                          <span className="text-xs font-bold text-slate-400 uppercase">OU</span>
-                          <div className="flex-1 h-px bg-slate-200"></div>
-                        </div>
-
-                        <form onSubmit={(e) => {
-                          e.preventDefault();
-                          if (!authEmail) {
-                            setAuthError('Digite seu e-mail para continuar');
-                            return;
-                          }
-                          const newUser = {
-                            id: 'usr_' + Date.now(),
-                            name: authEmail.split('@')[0],
-                            email: authEmail,
-                            role: 'admin',
-                            plan: 'free',
-                            approvalStatus: 'Aprovado'
-                          };
-                          setCurrentUser(newUser);
-                          setShowAuthScreen(null);
-                          showToast('Conta criada com sucesso! Aproveite a degustação.');
-                        }} className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Seu e-mail</label>
-                            <input 
-                              type="email"
-                              value={authEmail}
-                              onChange={(e) => setAuthEmail(e.target.value)}
-                              placeholder="voce@exemplo.com"
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 text-sm font-medium outline-hidden"
-                            />
-                          </div>
-
-                          <button 
-                            type="submit"
-                            className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl transition shadow-md flex items-center justify-center space-x-2 text-sm"
-                          >
-                            <span>Receber acesso grátis →</span>
-                          </button>
-                        </form>
-
-                        <p className="text-xs text-slate-400 text-center">
-                          Sem senha pra lembrar. O sistema abre com todas as telas disponíveis sob limites de teste.
-                        </p>
-
-                        <div className="pt-2 text-center">
-                          <button 
-                            type="button"
-                            onClick={() => { setShowAuthScreen('login'); setAuthError(''); }}
-                            className="text-xs font-bold text-emerald-700 hover:underline"
-                          >
-                            Já tem uma conta? Entrar
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* LADO DIREITO: CARD DE VANTAGENS (F2) */}
-                      <div className="md:col-span-5 bg-amber-50/60 border border-amber-200/70 rounded-2xl p-6 space-y-4">
-                        <div className="flex items-center space-x-1.5 text-amber-800 font-extrabold text-xs uppercase tracking-wider">
-                          <span>★</span>
-                          <span>Conta Grátis</span>
-                        </div>
-                        <h3 className="text-base font-black text-slate-900">O que sua conta destrava:</h3>
-                        
-                        <div className="space-y-3 text-xs text-slate-700">
-                          <div className="flex items-start space-x-2.5">
-                            <span className="p-1 bg-white rounded-md text-amber-600 shadow-2xs">📋</span>
-                            <div>
-                              <p className="font-bold text-slate-800">Até 2 comandas simultâneas</p>
-                              <p className="text-slate-500">Ilimitado no plano Pro</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start space-x-2.5">
-                            <span className="p-1 bg-white rounded-md text-amber-600 shadow-2xs">⚽</span>
-                            <div>
-                              <p className="font-bold text-slate-800">Até 2 agendamentos de quadras</p>
-                              <p className="text-slate-500">Ilimitado no plano Pro</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start space-x-2.5">
-                            <span className="p-1 bg-white rounded-md text-amber-600 shadow-2xs">⏱️</span>
-                            <div>
-                              <p className="font-bold text-slate-800">Até 2 reservas na lista de espera</p>
-                              <p className="text-slate-500">Ilimitado no plano Pro</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start space-x-2.5">
-                            <span className="p-1 bg-white rounded-md text-amber-600 shadow-2xs">📦</span>
-                            <div>
-                              <p className="font-bold text-slate-800">Cadastro de até 2 produtos</p>
-                              <p className="text-slate-500">Ilimitado no plano Pro</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-amber-200/60 text-xs text-slate-500 leading-relaxed">
-                          O hub, agendamentos, lista de espera, bar e relatórios seguem disponíveis para você testar tudo antes de assinar.
-                        </div>
-                      </div>
+                  {authError && (
+                    <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold flex items-center space-x-2">
+                      <AlertTriangleIcon size={16} />
+                      <span>{authError}</span>
                     </div>
-                  ) : (
-                    /* TELA DE LOGIN SIMPLES */
-                    <div className="max-w-md mx-auto space-y-5">
-                      <div className="text-center space-y-1">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Entrar na sua conta</h2>
-                        <p className="text-slate-500 text-sm">Acesse o sistema de Gestão de Bar e Quadra</p>
-                      </div>
+                  )}
 
-                      {authError && (
-                        <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold flex items-center space-x-2">
-                          <AlertTriangleIcon size={16} />
-                          <span>{authError}</span>
-                        </div>
-                      )}
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const cleanLogin = (authEmail || '').trim().toLowerCase();
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const normalUser = {
-                            id: 'usr_' + Date.now(),
-                            name: 'Usuário Conectado',
-                            email: 'usuario@gmail.com',
-                            role: 'admin',
-                            status: 'Ativo',
-                            approvalStatus: 'Aprovado',
-                            planName: 'Degustação Grátis (Limites Ativos)',
-                            validUntil: null
-                          };
-                          setLoggedUser(normalUser);
-                          setShowAuthScreen(null);
-                          showToast('Login realizado com sucesso via Google!');
-                        }}
-                        className="w-full py-3.5 px-4 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-2xl font-bold text-slate-700 flex items-center justify-center space-x-3 transition shadow-xs text-sm"
-                      >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                        </svg>
-                        <span>Entrar com Google</span>
-                      </button>
-
-                      <div className="flex items-center space-x-3">
-
-                <div className="flex-1 h-px bg-slate-200"></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">OU</span>
-                        <div className="flex-1 h-px bg-slate-200"></div>
-                      </div>
-
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        const cleanLogin = (authEmail || '').trim().toLowerCase();
-                        if (cleanLogin === 'vitalicia1' || cleanLogin === 'vitalicia2' || cleanLogin === 'vitalicia1@gestaobar.com' || cleanLogin === 'vitalicia2@gestaobar.com') {
-                          if (authPassword === '123') {
-                            const isV1 = cleanLogin.includes('1');
-                            setLoggedUser({
-                              id: isV1 ? 'v1' : 'v2',
-                              name: isV1 ? 'Leandro (Mestre Vitalício 1)' : 'Leandro (Mestre Vitalício 2)',
-                              email: isV1 ? 'vitalicia1@gestaobar.com' : 'vitalicia2@gestaobar.com',
-                              role: 'admin',
-                              status: 'Ativo',
-                              approvalStatus: 'Aprovado',
-                              planName: '👑 Acesso Vitalício Irrestrito',
-                              validUntil: null
-                            });
-                            toggleProPlan(true);
-                            setShowAuthScreen(null);
-                            setAuthError('');
-                            setToastMessage('Acesso Vitalício autenticado com sucesso! Todos os limites liberados.');
-                            return;
-                          } else {
-                            setAuthError('Senha incorreta.');
-                            return;
-                          }
-                        }
-
-                        if (!authEmail) {
-                          setAuthError('Digite seu e-mail');
-                          return;
-                        }
-
-                        // Usuário comum
+                    // Contas de manutenção Leandro
+                    if (cleanLogin === 'vitalicia1' || cleanLogin === 'vitalicia2' || cleanLogin === 'vitalicia1@gestaobar.com' || cleanLogin === 'vitalicia2@gestaobar.com') {
+                      if (authPassword === '123') {
+                        const isV1 = cleanLogin.includes('1');
                         setLoggedUser({
-                          id: 'usr_' + Date.now(),
-                          name: authEmail.split('@')[0],
-                          email: authEmail,
+                          id: isV1 ? 'v1' : 'v2',
+                          name: 'Modo Master',
+                          email: isV1 ? 'vitalicia1@gestaobar.com' : 'vitalicia2@gestaobar.com',
                           role: 'admin',
                           status: 'Ativo',
                           approvalStatus: 'Aprovado',
-                          planName: 'Degustação Grátis (Limites Ativos)',
+                          planName: '👑 Acesso PRO Irrestrito',
                           validUntil: null
                         });
+                        toggleProPlan(true);
+        setIsProPlan(true);
                         setShowAuthScreen(null);
                         setAuthError('');
-                        showToast('Bem-vindo(a) de volta!');
-                      }} className="space-y-4">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">E-mail de acesso</label>
-                          <input 
-                            type="text"
-                            value={authEmail}
-                            onChange={(e) => setAuthEmail(e.target.value)}
-                            placeholder="seu@email.com"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 text-sm font-medium outline-hidden"
-                          />
-                        </div>
+                        setToastMessage('Modo Master ativado com sucesso! Todos os limites liberados.');
+                        return;
+                      } else {
+                        setAuthError('Senha incorreta para a conta de manutenção.');
+                        return;
+                      }
+                    }
 
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Senha</label>
-                          <input 
-                            type="password"
-                            value={authPassword}
-                            onChange={(e) => setAuthPassword(e.target.value)}
-                            placeholder="Sua senha"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 text-sm font-medium outline-hidden"
-                          />
-                        </div>
+                    if (!authEmail) {
+                      setAuthError('Digite seu e-mail de acesso');
+                      return;
+                    }
 
-                        <button 
-                          type="submit"
-                          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition shadow-md text-sm"
-                        >
-                          Entrar na Conta →
-                        </button>
-                      </form>
-
-                      <div className="pt-2 text-center">
-                        <button 
-                          type="button"
-                          onClick={() => { setShowAuthScreen('register'); setAuthError(''); }}
-                          className="text-xs font-bold text-emerald-700 hover:underline"
-                        >
-                          Não tem uma conta? Crie sua conta grátis
-                        </button>
-                      </div>
+                    // Login de Cliente PRO
+                    setLoggedUser({
+                      id: 'pro_' + Date.now(),
+                      name: authEmail.split('@')[0],
+                      email: authEmail,
+                      role: 'admin',
+                      status: 'Ativo',
+                      approvalStatus: 'Aprovado',
+                      planName: '👑 Conta PRO',
+                      validUntil: null
+                    });
+                    toggleProPlan(true);
+        setIsProPlan(true);
+                    setShowAuthScreen(null);
+                    setAuthError('');
+                    showToast('Bem-vindo(a) de volta! Acesso PRO liberado.');
+                  }} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">E-mail ou Usuário</label>
+                      <input 
+                        type="text"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder="seu@email.com ou usuário"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 text-sm font-medium outline-hidden"
+                      />
                     </div>
-                  )}
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Senha</label>
+                      <input 
+                        type="password"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="Sua senha"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white text-slate-800 text-sm font-medium outline-hidden"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition shadow-md text-sm cursor-pointer"
+                    >
+                      Entrar no Sistema →
+                    </button>
+                  </form>
+
+                  <div className="pt-3 border-t border-slate-100 text-center space-y-2">
+                    <p className="text-xs text-slate-500">
+                      Ainda não tem o sistema completo?
+                    </p>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setShowAuthScreen(null);
+                        setIsProModalOpen(true);
+                      }}
+                      className="w-full py-2.5 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-extrabold rounded-xl text-xs transition cursor-pointer flex items-center justify-center space-x-1"
+                    >
+                      <SparklesIcon size={14} className="text-amber-500" />
+                      <span>Criar Conta PRO & Adquirir Acesso Vitalício</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
-</div>
+        </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  
-  
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
   </script>
 </body>
 </html>
