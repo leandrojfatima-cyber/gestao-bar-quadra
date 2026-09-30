@@ -672,6 +672,80 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
 
       const [cashMovements, setCashMovements] = useState([]);
 
+      // ISOLAMENTO MULTI-TENANT DE CONTAS (DADOS INDEPENDENTES POR CONTA)
+      const isSwitchingAccountRef = React.useRef(false);
+      const currentAccountKey = (loggedUser?.email || 'degustacao@gestaobar.com').trim().toLowerCase();
+
+      // Carrega dados exclusivos da conta quando o usuário logado muda
+      useEffect(() => {
+        isSwitchingAccountRef.current = true;
+        try {
+          const rawStore = localStorage.getItem('gestao_bar_store_' + currentAccountKey);
+          if (rawStore) {
+            const parsed = JSON.parse(rawStore);
+            if (Array.isArray(parsed.products)) setProducts(parsed.products);
+            if (Array.isArray(parsed.courts)) setCourts(parsed.courts);
+            if (Array.isArray(parsed.bookings)) setBookings(parsed.bookings);
+            if (Array.isArray(parsed.tablesList)) setTablesList(parsed.tablesList);
+            if (Array.isArray(parsed.comandas)) setComandas(parsed.comandas);
+            if (Array.isArray(parsed.salesHistory)) setSalesHistory(parsed.salesHistory);
+            if (Array.isArray(parsed.waitlist)) setWaitlist(parsed.waitlist);
+            if (parsed.cashShift) setCashShift(parsed.cashShift);
+            if (Array.isArray(parsed.cashMovements)) setCashMovements(parsed.cashMovements);
+          } else {
+            // Nova conta: inicia com catálogo padrão independente
+            if (currentAccountKey === 'degustacao@gestaobar.com') {
+              setProducts(INITIAL_PRODUCTS);
+              setCourts(INITIAL_COURTS);
+              setBookings(INITIAL_BOOKINGS);
+              setTablesList(INITIAL_TABLES);
+              setComandas(INITIAL_COMANDAS);
+              setWaitlist(INITIAL_WAITLIST);
+            } else {
+              // Cliente PRO independente: copia inicial limpa para o cliente customizar
+              setProducts(INITIAL_PRODUCTS.map(p => ({ ...p, id: 'p_' + Math.random().toString(36).substr(2, 6) })));
+              setCourts(INITIAL_COURTS);
+              setBookings([]);
+              setTablesList(INITIAL_TABLES);
+              setComandas([]);
+              setSalesHistory([]);
+              setWaitlist([]);
+              setCashMovements([]);
+              setCashShift({ isOpen: false, openedAt: null, openedBy: null, initialBalance: 0 });
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao isolar dados da conta:', e);
+        } finally {
+          setTimeout(() => {
+            isSwitchingAccountRef.current = false;
+          }, 100);
+        }
+      }, [currentAccountKey]);
+
+      // Salva automaticamente qualquer alteração apenas na conta ativa
+      useEffect(() => {
+        if (isSwitchingAccountRef.current) return;
+        try {
+          const payload = {
+            account: currentAccountKey,
+            products,
+            courts,
+            bookings,
+            tablesList,
+            comandas,
+            salesHistory,
+            waitlist,
+            cashShift,
+            cashMovements,
+            updatedAt: new Date().toISOString()
+          };
+          localStorage.setItem('gestao_bar_store_' + currentAccountKey, JSON.stringify(payload));
+        } catch (e) {
+          console.error('Erro ao salvar dados da conta:', e);
+        }
+      }, [currentAccountKey, products, courts, bookings, tablesList, comandas, salesHistory, waitlist, cashShift, cashMovements]);
+
       const [activeComandaId, setActiveComandaId] = useState(INITIAL_COMANDAS[0]?.id || null);
       const [closingPaymentMethod, setClosingPaymentMethod] = useState('PIX');
       const [cashReceived, setCashReceived] = useState('');
