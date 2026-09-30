@@ -398,16 +398,6 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         }
       };
 
-      useEffect(() => {
-        logToSupabase('Acesso ao Sistema', { tela: 'Início' });
-      }, []);
-
-      useEffect(() => {
-        if ((loggedUser?.email === 'vitalicia1@gestaobar.com' || loggedUser?.id === 'v1') && activeTab === 'audit') {
-          fetchAuditLogs();
-        }
-      }, [activeTab, loggedUser]);
-
       // Sistema de Notificações Sonoras (Web Audio API nativa sem dependência de internet ou arquivos externos)
       
       const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -582,6 +572,16 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       });
       
       const [activeTab, setActiveTab] = useState('welcome');
+      useEffect(() => {
+        logToSupabase('Acesso ao Sistema', { tela: 'Início' });
+      }, []);
+
+      useEffect(() => {
+        if ((loggedUser?.email === 'vitalicia1@gestaobar.com' || loggedUser?.id === 'v1') && activeTab === 'audit') {
+          fetchAuditLogs();
+        }
+      }, [activeTab, loggedUser]);
+
       const [isPostPaymentModalOpen, setIsPostPaymentModalOpen] = useState(false);
       const [postPaymentData, setPostPaymentData] = useState({ name: '', email: '', password: '' });
 
