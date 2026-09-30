@@ -2346,6 +2346,116 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         </div>
       );
 
+      
+      const renderAudit = () => {
+        const uniqueUsers = new Set((auditLogs || []).map(l => l.user_email).filter(Boolean)).size;
+        return (
+          <div className="space-y-6 pb-12">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 sm:p-6 text-white shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Banco Supabase Conectado (São Paulo)
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                  <ShieldCheckIcon className="w-6 h-6 text-indigo-400" />
+                  Painel de Auditoria & Controle Master
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                  Exclusivo para a conta <b>vitalicia1@gestaobar.com</b>. Acompanhe todos os acessos e ações feitas pelos clientes em tempo real.
+                </p>
+              </div>
+              <button
+                onClick={fetchAuditLogs}
+                disabled={isLoadingAudit}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+              >
+                <RefreshCwIcon className={"w-4 h-4 " + (isLoadingAudit ? "animate-spin" : "")} />
+                {isLoadingAudit ? 'Atualizando...' : 'Atualizar Atividades'}
+              </button>
+            </div>
+
+            {/* Metricas */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total de Atividades</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">{auditLogs ? auditLogs.length : 0}</p>
+                <p className="text-[11px] text-emerald-600 font-medium mt-1">Salvas em nuvem no Supabase</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Usuários Identificados</p>
+                <p className="text-2xl font-black text-indigo-600 mt-1">{uniqueUsers}</p>
+                <p className="text-[11px] text-slate-500 font-medium mt-1">Contas e visitantes registrados</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status da Sincronização</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <span className="text-sm font-bold text-slate-800">Online e Operante</span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium mt-1">Latência ultrabaixa (SP)</p>
+              </div>
+            </div>
+
+            {/* Lista de Atividades */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-800">Histórico Recente de Ações dos Usuários</h3>
+                <span className="text-xs font-semibold text-slate-500">Últimos {auditLogs ? auditLogs.length : 0} eventos</span>
+              </div>
+              
+              {!auditLogs || auditLogs.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">
+                  <ClockIcon className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm font-semibold">Nenhuma atividade registrada ainda no banco.</p>
+                  <p className="text-xs text-slate-400 mt-1">Clique em "Atualizar Atividades" para consultar o Supabase.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100/75 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="p-3">Data / Hora</th>
+                        <th className="p-3">Usuário / E-mail</th>
+                        <th className="p-3">Ação Realizada</th>
+                        <th className="p-3">Dispositivo</th>
+                        <th className="p-3">Detalhes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {auditLogs.map((log) => {
+                        const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '-';
+                        const details = log.details || {};
+                        return (
+                          <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3 font-mono text-slate-600 whitespace-nowrap">{dateStr}</td>
+                            <td className="p-3">
+                              <span className="font-bold text-slate-800 block">{log.user_email}</span>
+                              <span className="text-[10px] text-slate-400">{details.plan || 'Plano indefinido'}</span>
+                            </td>
+                            <td className="p-3">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="p-3 text-slate-600 font-medium">
+                              {details.device || 'Navegador'}
+                            </td>
+                            <td className="p-3 text-slate-500 font-mono text-[11px] max-w-xs truncate">
+                              {JSON.stringify(details)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
       const renderCourts = () => (
         <div className="space-y-6 animate-in fade-in duration-300 relative z-10">
           <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-6 border border-slate-200 shadow-xs">
