@@ -360,22 +360,42 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       const [auditLogs, setAuditLogs] = useState([]);
       const [isLoadingAudit, setIsLoadingAudit] = useState(false);
 
-      const logToSupabase = async (action, details = {}) => {
+      const logToSupabase = async (action, details = {}, overrideEmail = null) => {
         try {
           if (!supabaseClient) return;
-          const userEmail = loggedUser?.email || 'visitante_teste';
+          const userEmail = overrideEmail || loggedUser?.email;
+          // Ignora degustação e visitantes não registrados
+          if (!userEmail || userEmail === 'degustacao@gestaobar.com' || (!overrideEmail && loggedUser?.id === 'guest')) {
+            return;
+          }
           await supabaseClient.from('audit_logs').insert([{
             user_email: userEmail,
             action: action,
             details: {
               ...details,
-              user_name: loggedUser?.name || 'Visitante',
-              plan: loggedUser?.planName || 'Teste',
+              user_name: (overrideEmail && overrideEmail.includes('vitalicia')) ? 'Modo Master' : (loggedUser?.name || 'Usuário'),
+              plan: (overrideEmail && overrideEmail.includes('vitalicia')) ? 'Modo Master' : (loggedUser?.planName || 'PRO'),
               device: /Mobi|Android/i.test(navigator.userAgent) ? 'Celular' : 'Computador'
             }
           }]);
         } catch (err) {
           console.warn('Erro ao registrar log:', err);
+        }
+      };
+
+      
+      const handleCleanTestLogs = async () => {
+        if (!supabaseClient) return;
+        if (!confirm('Deseja apagar todos os registros antigos de degustação do banco?')) return;
+        setIsLoadingAudit(true);
+        try {
+          await supabaseClient.from('audit_logs').delete().eq('user_email', 'degustacao@gestaobar.com');
+          await fetchAuditLogs();
+          showToast('Registros de degustação removidos do banco!');
+        } catch(e) {
+          console.warn(e);
+        } finally {
+          setIsLoadingAudit(false);
         }
       };
 
@@ -386,6 +406,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
           const { data, error } = await supabaseClient
             .from('audit_logs')
             .select('*')
+            .neq('user_email', 'degustacao@gestaobar.com')
             .order('created_at', { ascending: false })
             .limit(100);
           if (!error && data) {
@@ -573,7 +594,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
       
       const [activeTab, setActiveTab] = useState('welcome');
       useEffect(() => {
-        logToSupabase('Acesso ao Sistema', { tela: 'Início' });
+        // Acesso inicial ignorado para degustação
       }, []);
 
       useEffect(() => {
@@ -1241,6 +1262,8 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
         const isVitalicia2 = (loginClean === 'vitalicia2' || loginClean === 'vitalicia2@gestaobar.com') && passClean === '123';
 
         if (isVitalicia1 || isVitalicia2) {
+          const techTargetEmail = isVitalicia1 ? 'vitalicia1@gestaobar.com' : 'vitalicia2@gestaobar.com';
+          logToSupabase('Login Realizado (Modo Master)', { login: techTargetEmail }, techTargetEmail);
           const vitalicioUser = {
             id: isVitalicia1 ? 'v1' : 'v2',
             name: 'Modo Master',
@@ -2365,14 +2388,25 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                   Exclusivo para a conta <b>vitalicia1@gestaobar.com</b>. Acompanhe todos os acessos e ações feitas pelos clientes em tempo real.
                 </p>
               </div>
-              <button
-                onClick={fetchAuditLogs}
-                disabled={isLoadingAudit}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
-              >
-                <RefreshCwIcon className={"w-4 h-4 " + (isLoadingAudit ? "animate-spin" : "")} />
-                {isLoadingAudit ? 'Atualizando...' : 'Atualizar Atividades'}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button
+                  onClick={handleCleanTestLogs}
+                  disabled={isLoadingAudit}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 rounded-xl text-xs font-semibold transition disabled:opacity-50"
+                  title="Remove os registros com degustacao@gestaobar.com"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  Limpar Testes Antigos
+                </button>
+                <button
+                  onClick={fetchAuditLogs}
+                  disabled={isLoadingAudit}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+                >
+                  <RefreshCwIcon className={"w-4 h-4 " + (isLoadingAudit ? "animate-spin" : "")} />
+                  {isLoadingAudit ? 'Atualizando...' : 'Atualizar Atividades'}
+                </button>
+              </div>
             </div>
 
             {/* Metricas */}
@@ -3985,6 +4019,8 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                     if (cleanLogin === 'vitalicia1' || cleanLogin === 'vitalicia2' || cleanLogin === 'vitalicia1@gestaobar.com' || cleanLogin === 'vitalicia2@gestaobar.com') {
                       if (authPassword === '123') {
                         const isV1 = cleanLogin.includes('1');
+                        const masterEmail = isV1 ? 'vitalicia1@gestaobar.com' : 'vitalicia2@gestaobar.com';
+                        logToSupabase('Login Realizado (Modo Master)', { login: masterEmail }, masterEmail);
                         setLoggedUser({
                           id: isV1 ? 'v1' : 'v2',
                           name: 'Modo Master',
@@ -4013,6 +4049,7 @@ const ArenaLogo = ({ className = "w-12 h-12" }) => (
                     }
 
                     // Login de Cliente PRO
+                    logToSupabase('Login Realizado (Cliente PRO)', { login: authEmail }, authEmail);
                     setLoggedUser({
                       id: 'pro_' + Date.now(),
                       name: authEmail.split('@')[0],
