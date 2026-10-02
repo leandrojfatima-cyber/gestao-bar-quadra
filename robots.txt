@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gestao-bar-quadra.vercel.app/sitemap.xml
